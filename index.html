@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>College Algebra Educational Games</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+:root{
+  --paper:#eef3f6; --grid:#dbe4eb; --card:#ffffff; --ink:#17222d; --muted:#556472; --line:#c7d3dd;
+  --sq:#2c5cc9; --sq-soft:#dce6fb; --unit:#b9770a;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root{--paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47; --sq:#80a6ff; --sq-soft:#1e2d52; --unit:#f1b54a}
+}
+*{box-sizing:border-box}
+body{margin:0;background-color:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.wrap{max-width:900px;margin:0 auto;padding:40px max(16px,env(safe-area-inset-right,0px)) 48px max(16px,env(safe-area-inset-left,0px));display:grid;gap:24px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2rem,6vw,3rem);letter-spacing:-.025em;line-height:1;margin:0;text-wrap:balance}
+.sub{margin:10px 0 0;color:var(--muted);max-width:60ch}
+.games{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.game{display:grid;gap:6px;height:100%;padding:18px 20px;background:var(--card);border:1.5px solid var(--line);border-radius:14px;color:inherit;text-decoration:none}
+.game:hover,.game:focus-visible{border-color:var(--sq);box-shadow:0 0 0 3px var(--sq-soft);outline:none}
+.sec{font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.game h2{font-family:var(--f-display);font-weight:800;font-size:1.5rem;margin:0}
+.game h2 .amp{color:var(--unit)}
+.game p{margin:0;color:var(--muted)}
+.play{margin-top:8px;font-weight:700;color:var(--sq)}
+footer{color:var(--muted);font-size:.85rem}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>College Algebra Educational Games</h1>
+    <p class="sub">Browser games for practicing College Algebra skills. They run on phones and computers, with nothing to install and no account needed.</p>
+  </header>
+  <ul class="games">
+    <li>
+      <a class="game" href="games/branch-and-box.html">
+        <span class="sec">Section 1.5 · Factoring</span>
+        <h2>Branch <span class="amp">&amp;</span> Box</h2>
+        <p>Six stations: prime factor trees, LCM and GCF, pulling out the GCF, trinomials with a = 1, factoring by grouping, and a 60-second special-cases round.</p>
+        <span class="play">Play →</span>
+      </a>
+    </li>
+  </ul>
+  <footer>Progress (stars) is saved in your own browser only.</footer>
+</div>
+</body>
+</html>

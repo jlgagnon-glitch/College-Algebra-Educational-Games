@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Branch &amp; Box</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: graph-paper workbench. Station rail on top, one play card below. Colors come from algebra tiles:
+   blue = x² tile, green = x tile, amber = unit tile (and circled primes), rose = negatives / slips. */
+:root{
+  --paper:#eef3f6; --grid:#dbe4eb; --card:#ffffff; --ink:#17222d; --muted:#556472; --line:#c7d3dd;
+  --sq:#2c5cc9; --sq-soft:#dce6fb; --lin:#1b845a; --lin-soft:#d5efe2;
+  --unit:#b9770a; --unit-soft:#fcecc9; --neg:#c3364d; --neg-soft:#f8dce1;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Cambria","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+    --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+    --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+  --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+  --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.wrap{max-width:1000px;margin:0 auto;display:grid;gap:18px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3.2rem);letter-spacing:-.025em;line-height:.95;margin:0}
+h1 .amp{color:var(--unit)}
+.sub{margin:8px 0 0;color:var(--muted);max-width:60ch}
+.total{display:flex;align-items:baseline;gap:6px;font-family:var(--f-display);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:6px 14px}
+.tot-n{font-size:1.8rem;font-weight:800;color:var(--unit);font-variant-numeric:tabular-nums}
+.tot-of{color:var(--muted);font-size:.9rem}
+.rail-wrap{overflow-x:auto;padding:4px;margin:-4px}
+.rail{display:grid;grid-template-columns:repeat(6,minmax(140px,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.st-btn{width:100%;height:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer;display:grid;gap:1px;align-content:start}
+.st-btn:hover{border-color:var(--sq)}
+.st-btn[aria-current="true"]{border-color:var(--sq);box-shadow:0 0 0 3px var(--sq-soft)}
+.st-num{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.st-name{font-family:var(--f-display);font-weight:600;font-size:1.02rem;line-height:1.2}
+.st-topic{font-size:.82rem;color:var(--muted)}
+.st-stars{color:var(--unit);letter-spacing:2px;font-size:.95rem;margin-top:4px}
+.stage{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:clamp(16px,3.2vw,30px);display:grid;gap:16px;min-width:0}
+.stage-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px}
+.eyebrow{margin:0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);margin:2px 0 0;letter-spacing:-.015em;text-wrap:balance}
+.dots{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.dots li{min-width:34px;height:30px;padding:0 6px;border-radius:15px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots li.now{border-color:var(--sq);color:var(--sq);font-weight:700}
+.dots li.done{background:var(--unit-soft);border-color:var(--unit);color:var(--unit);letter-spacing:-1px}
+.prompt{font-size:1.08rem;max-width:70ch}
+.prompt p{margin:0}
+.m{font-family:var(--f-math);font-size:1.18em;white-space:nowrap}
+.m i{font-style:italic}
+sup{font-size:.68em;line-height:0}
+.big{font-size:clamp(1.6rem,5.5vw,2.4rem);margin:0}
+.lbl{margin:0 0 6px;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.play{display:grid;gap:16px;min-width:0}
+.fb{min-height:1.6em;font-size:1.02rem;padding:10px 14px;border-radius:10px;border:1.5px dashed var(--line);color:var(--muted)}
+.fb:empty{border-color:transparent;padding-block:0;min-height:0}
+.fb.good{border:1.5px solid var(--lin);background:var(--lin-soft);color:var(--ink)}
+.fb.bad{border:1.5px solid var(--neg);background:var(--neg-soft);color:var(--ink)}
+.fb-stars{color:var(--unit);letter-spacing:2px;margin-right:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.actions:empty{display:none}
+.btn{font:inherit;font-weight:700;border-radius:9px;padding:10px 18px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--card)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:3px solid var(--sq);outline-offset:2px}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}100%{transform:none}}
+@keyframes pop{from{transform:scale(.6);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion: reduce){.shake,.pop{animation:none!important}}
+
+/* Station 1: tree */
+.tree-wrap{display:flex;justify-content:center;overflow-x:auto;padding:4px}
+.tree-wrap svg{max-width:100%;height:auto}
+.tree-wrap text{font-family:var(--f-body);font-size:16px;fill:var(--ink);text-anchor:middle;dominant-baseline:central;font-variant-numeric:tabular-nums}
+.tree-wrap line{stroke:var(--muted);stroke-width:1.5}
+.n-prime circle{fill:var(--unit-soft);stroke:var(--unit);stroke-width:2}
+.n-active rect{fill:var(--sq-soft);stroke:var(--sq);stroke-width:2;stroke-dasharray:5 4}
+.n-active text{font-weight:700}
+.pop{animation:pop .3s ease-out;transform-box:fill-box;transform-origin:center}
+.keys{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.key{font:inherit;font-weight:700;font-size:1.05rem;min-width:64px;padding:10px 12px;border-radius:9px;border:1.5px solid var(--unit);background:var(--unit-soft);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.key.circle{border-color:var(--sq);background:var(--sq-soft)}
+.key:hover{filter:brightness(1.05)}
+.result{font-size:1.15rem}
+
+/* Station 2: exponent table */
+.tbl-wrap{overflow-x:auto}
+table.exp{border-collapse:separate;border-spacing:0;font-variant-numeric:tabular-nums;font-size:1.1rem;margin-inline:auto}
+table.exp caption{caption-side:top;text-align:left;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);padding-bottom:6px}
+table.exp th,table.exp td{padding:8px 14px;text-align:center;border-bottom:1px solid var(--line)}
+table.exp thead th{color:var(--muted);font-weight:400;font-size:.9rem}
+table.exp tbody th{text-align:right;font-weight:700}
+table.exp tr.ans th{color:var(--sq)}
+table.exp tr.ans td,table.exp tr.ans th{border-bottom:none;padding-top:12px}
+td.right .stepper{border-color:var(--lin);background:var(--lin-soft)}
+td.wrong .stepper{border-color:var(--neg);background:var(--neg-soft)}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:9px;background:var(--card)}
+.stepper button{font:inherit;font-size:1.15rem;width:36px;height:38px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:46px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.live{margin:0;text-align:center;font-size:1.1rem}
+
+/* Station 3: GCF */
+.gcf{display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:20px;align-items:start}
+.ctrls{display:grid;gap:12px}
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ctrl span{font-weight:700}
+.gshow{display:inline-block;padding:4px 16px;border-radius:9px;background:var(--sq-soft);border:1.5px solid var(--sq)}
+.divs{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.divs li{padding:6px 10px;border-radius:8px;border-left:4px solid var(--lin);background:var(--lin-soft)}
+.divs li.no{border-left-color:var(--neg);background:var(--neg-soft)}
+.divs .why{font-size:.9rem;color:var(--muted)}
+
+/* Stations 4–5: pairs + box */
+.split{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:22px;align-items:start}
+.pairs{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:8px}
+.pair{font:inherit;display:grid;gap:2px;justify-items:center;padding:8px 6px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;font-variant-numeric:tabular-nums}
+.pair:hover:not(:disabled){border-color:var(--sq)}
+.pair .pq{font-weight:700}
+.pair .sum{font-size:.85rem;color:var(--muted);min-height:1.3em}
+.pair.miss{border-color:var(--neg);background:var(--neg-soft)}
+.pair.hit{border-color:var(--lin);background:var(--lin-soft)}
+.pair:disabled{cursor:default}
+.box{display:grid;grid-template-columns:auto 1.5fr 1fr;grid-template-rows:auto 92px 64px;gap:4px;max-width:340px}
+.box .hdr{display:grid;place-items:center;padding:4px 8px;font-weight:700;color:var(--muted)}
+.box .cell{display:grid;place-items:center;border-radius:6px;border:2px solid;text-align:center;padding:4px}
+.cell.sq{background:var(--sq-soft);border-color:var(--sq)}
+.cell.lin{background:var(--lin-soft);border-color:var(--lin)}
+.cell.unit{background:var(--unit-soft);border-color:var(--unit)}
+.cell.unk{border-style:dashed;border-color:var(--muted);color:var(--muted);background:transparent}
+.cell.neg{background-image:repeating-linear-gradient(135deg,transparent 0 7px,var(--neg-soft) 7px 9px)}
+.box-note{font-size:.88rem;color:var(--muted);margin:8px 0 0;max-width:42ch}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.steps>li{border-left:3px solid var(--line);padding:2px 0 2px 14px;display:grid;gap:8px}
+.steps>li.on{border-left-color:var(--sq)}
+.steps>li.ok{border-left-color:var(--lin)}
+.steps>li[hidden]{display:none}
+.steps p{margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;padding:8px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--sq)}
+.opt.miss{border-color:var(--neg);background:var(--neg-soft)}
+.opt.hit{border-color:var(--lin);background:var(--lin-soft)}
+.work{display:grid;gap:4px;font-size:1.05rem}
+
+/* Station 6: speed */
+.speed{display:grid;gap:14px;justify-items:center;text-align:center}
+.timer{width:100%;height:10px;border-radius:5px;background:var(--grid);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--sq);transform-origin:left;transition:transform .1s linear}
+.speed-top{width:100%;display:flex;justify-content:space-between;font-weight:700;font-variant-numeric:tabular-nums}
+.expr{min-height:1.4em}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.choice{font:inherit;font-weight:700;padding:14px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;display:grid;gap:4px;justify-items:center}
+.choice:hover:not(:disabled){border-color:var(--sq)}
+.choice:disabled{opacity:.5;cursor:default}
+.choice .m{font-weight:400;font-size:1em;color:var(--muted)}
+kbd{font-family:var(--f-body);font-size:.75rem;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+
+.summary{display:grid;gap:10px;justify-items:start}
+.bigstars{font-size:3rem;color:var(--unit);letter-spacing:6px;margin:0;line-height:1}
+.summary p{margin:0;max-width:60ch}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;color:var(--muted);font-size:.85rem}
+.linkbtn{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+
+@media (max-width:720px){
+  .split,.gcf{grid-template-columns:minmax(0,1fr)}
+  .choices{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Branch <span class="amp">&amp;</span> Box</h1>
+      <p class="sub">A factoring game for Math 115, Section 1.5. Six stations, one per skill in the notes. Five rounds each: a clean round earns three stars, each slip costs one.</p>
+    </div>
+    <div class="total" id="total" aria-live="polite"></div>
+  </header>
+  <nav class="rail-wrap" aria-label="Stations"><ol class="rail" id="rail"></ol></nav>
+  <main class="stage" id="stage"></main>
+  <footer>
+    <span>Stars are saved in this browser only.</span>
+    <button class="linkbtn" id="reset" type="button">Reset stars</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+const gcdAll=arr=>arr.reduce((g,v)=>gcd(g,v),0);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const isPrime=n=>{if(n<2)return false;for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true;};
+const MINUS="−";
+const sup=e=>`<sup>${e}</sup>`;
+function factorize(n){const f={};let d=2;while(n>1){while(n%d===0){f[d]=(f[d]||0)+1;n/=d;}d++;}return f;}
+const expForm=f=>Object.keys(f).map(Number).sort((a,b)=>a-b).map(p=>p+sup(f[p])).join(" · ");
+function varPart(xp,yp){let s="";if(xp)s+="<i>x</i>"+(xp>1?sup(xp):"");if(yp)s+="<i>y</i>"+(yp>1?sup(yp):"");return s;}
+function term(c,xp=0,yp=0,first=true){
+  const v=varPart(xp,yp),a=Math.abs(c);
+  const body=(a===1&&v)?v:(a+v);
+  if(first)return (c<0?MINUS:"")+body;
+  return (c<0?` ${MINUS} `:" + ")+body;
+}
+function poly(ts){ts=ts.filter(t=>t.c!==0);if(!ts.length)return "0";return ts.map((t,i)=>term(t.c,t.x||0,t.y||0,i===0)).join("");}
+const lin=(a,b)=>poly([{c:a,x:1},{c:b}]);
+const M=h=>`<span class="m">${h}</span>`;
+const signed=n=>n<0?MINUS+(-n):String(n);
+const paren=n=>n<0?`(${MINUS}${-n})`:String(n);
+const plus=n=>n<0?MINUS+(-n):"+"+n;
+const starStr=n=>"★".repeat(n)+"☆".repeat(3-n);
+
+/* ---------- shared widgets ---------- */
+function pairList(c){
+  const a=Math.abs(c),out=[];
+  for(let d=1;d*d<=a;d++){
+    if(a%d)continue;const e=a/d;
+    if(c>0)out.push([d,e],[-d,-e]);else out.push([d,-e],[-d,e]);
+  }
+  return out;
+}
+function pairCards(host,prod,target,onHit,onMiss){
+  host.innerHTML=pairList(prod).map(([p,q])=>`<button type="button" class="pair" data-p="${p}" data-q="${q}"><span class="pq">${signed(p)} · ${paren(q)}</span><span class="sum"></span></button>`).join("");
+  host.addEventListener("click",e=>{
+    const b=e.target.closest(".pair");if(!b||b.disabled)return;
+    const p=+b.dataset.p,q=+b.dataset.q,s=p+q;
+    $(".sum",b).innerHTML=`sum ${signed(s)}`;
+    b.disabled=true;
+    if(s===target){b.classList.add("hit");host.querySelectorAll(".pair").forEach(x=>x.disabled=true);onHit(p,q);}
+    else{b.classList.add("miss");onMiss(p,q,s);}
+  });
+}
+function cell(h,kind,neg){return {h,kind,neg};}
+function boxHTML(cols,rows,cells){
+  let h=`<div class="box"><div></div>${cols.map(c=>`<div class="hdr">${M(c)}</div>`).join("")}`;
+  rows.forEach((r,i)=>{h+=`<div class="hdr">${M(r)}</div>`+cells[i].map(c=>`<div class="cell ${c.kind}${c.neg?" neg":""}">${M(c.h)}</div>`).join("");});
+  return h+"</div>";
+}
+
+/* ---------- shell ---------- */
+const store={
+  get(){try{return JSON.parse(localStorage.getItem("branch-box-stars")||"{}")||{};}catch(e){return {};}},
+  set(o){try{localStorage.setItem("branch-box-stars",JSON.stringify(o));}catch(e){}}
+};
+let best=store.get();
+const S={st:0,round:0,mistakes:0,roundStars:[],cleanup:null,key:null};
+
+function renderNav(){
+  $("#rail").innerHTML=STATIONS.map((st,i)=>`<li><button type="button" class="st-btn" data-i="${i}" aria-current="${i===S.st}"><span class="st-num">Station ${i+1}</span><span class="st-name">${st.name}</span><span class="st-topic">${st.sec}</span><span class="st-stars" aria-label="${best[i]||0} of 3 stars">${starStr(best[i]||0)}</span></button></li>`).join("");
+  const tot=STATIONS.reduce((s,_,i)=>s+(best[i]||0),0);
+  $("#total").innerHTML=`<span class="tot-n">${tot}</span><span class="tot-of">of ${STATIONS.length*3} stars</span>`;
+}
+function teardown(){if(S.cleanup){S.cleanup();S.cleanup=null;}S.key=null;}
+function loadStation(i){teardown();S.st=i;S.round=0;S.roundStars=[];renderNav();startRound();}
+function startRound(){
+  teardown();S.mistakes=0;
+  const st=STATIONS[S.st];
+  $("#stage").innerHTML=`<div class="stage-head"><div><p class="eyebrow">Station ${S.st+1} · ${st.sec}</p><h2>${st.name}</h2></div>${st.rounds>1?`<ol class="dots" id="dots" aria-label="Round progress"></ol>`:""}</div>
+  <div class="prompt" id="prompt"></div><div class="play" id="play"></div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="actions"></div>`;
+  renderDots();st.round(S.round);
+}
+function renderDots(){
+  const d=$("#dots");if(!d)return;let h="";
+  for(let i=0;i<STATIONS[S.st].rounds;i++){
+    const s=S.roundStars[i];
+    h+=`<li class="${s?"done":i===S.round?"now":""}" aria-label="Round ${i+1}${s?`: ${s} stars`:""}">${s?"★".repeat(s):i+1}</li>`;
+  }
+  d.innerHTML=h;
+}
+const ctx={
+  prompt(h){$("#prompt").innerHTML=h;},
+  play(){return $("#play");},
+  say(h,k=""){const f=$("#fb");f.className="fb"+(k?" "+k:"");f.innerHTML=h;},
+  miss(h){S.mistakes++;ctx.say(h,"bad");const p=$("#play");p.classList.remove("shake");void p.offsetWidth;p.classList.add("shake");},
+  win(h){
+    const s=S.mistakes===0?3:S.mistakes===1?2:1;S.roundStars[S.round]=s;renderDots();
+    ctx.say(`<span class="fb-stars" aria-label="${s} stars">${starStr(s)}</span>${h}`,"good");
+    const last=S.round>=STATIONS[S.st].rounds-1;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="next">${last?"See results":"Next round"} →</button>`;
+    $("#next").onclick=()=>{
+      S.round++;
+      if(S.round>=STATIONS[S.st].rounds){
+        const avg=S.roundStars.reduce((a,b)=>a+b,0)/S.roundStars.length;
+        finish(Math.round(avg),`Round stars: ${S.roundStars.join(", ")}. A three-star round has no slips.`);
+      }else startRound();
+    };
+    S.key=e=>{if(e.key==="Enter"&&document.activeElement===document.body){e.preventDefault();$("#next").click();}};
+    $("#next").focus({preventScroll:true});
+  }
+};
+function finish(n,detail){
+  teardown();
+  const i=S.st;if(n>(best[i]||0)){best[i]=n;store.set(best);}
+  renderNav();
+  const nx=(i+1)%STATIONS.length;
+  $("#stage").innerHTML=`<div class="summary"><p class="eyebrow">Station ${i+1} complete</p><h2>${STATIONS[i].name}</h2>
+  <p class="bigstars" aria-label="${n} of 3 stars">${starStr(n)}</p><p>${detail}</p>
+  <div class="actions"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn primary" id="go">Station ${nx+1}: ${STATIONS[nx].name} →</button></div></div>`;
+  $("#again").onclick=()=>loadStation(i);
+  $("#go").onclick=()=>loadStation(nx);
+}
+
+/* ---------- Station 1: prime factor trees ---------- */
+function drawTree(svg,n0,steps,done,animLast){
+  const dx=38,dy=58,R=dx+36,L=steps.length;
+  const nodes=[],edges=[];let val=n0;
+  const kindOf=last=>last?(done?"prime":"active"):"comp";
+  nodes.push({x:R,y:30,v:n0,k:kindOf(L===0)});
+  for(let i=0;i<L;i++){
+    const px=R+i*dx,py=30+i*dy,p=steps[i];val/=p;
+    edges.push([px,py,px-dx,py+dy],[px,py,px+dx,py+dy]);
+    nodes.push({x:px-dx,y:py+dy,v:p,k:"prime",a:animLast&&i===L-1});
+    nodes.push({x:px+dx,y:py+dy,v:val,k:kindOf(i===L-1),a:animLast&&i===L-1});
+  }
+  const W=R+L*dx+60,H=30+L*dy+32;
+  let h=edges.map(([x1,y1,x2,y2])=>`<line x1="${x1}" y1="${y1+15}" x2="${x2}" y2="${y2-17}"/>`).join("");
+  nodes.forEach(n=>{
+    const cls=n.a?" pop":"";
+    if(n.k==="prime")h+=`<g class="n-prime${cls}"><circle cx="${n.x}" cy="${n.y}" r="17"/><text x="${n.x}" y="${n.y}">${n.v}</text></g>`;
+    else if(n.k==="active"){const w=22+10*String(n.v).length;h+=`<g class="n-active${cls}"><rect x="${n.x-w/2}" y="${n.y-16}" width="${w}" height="32" rx="7"/><text x="${n.x}" y="${n.y}">${n.v}</text></g>`;}
+    else h+=`<g class="${cls}"><text x="${n.x}" y="${n.y}">${n.v}</text></g>`;
+  });
+  svg.setAttribute("viewBox",`0 0 ${W} ${H}`);svg.setAttribute("width",W);svg.innerHTML=h;
+}
+const S1={
+  name:"Split the Tree",sec:"Prime factorization",rounds:5,
+  gen(r){
+    const pools=[[2,3,5],[2,3,5],[2,3,5,7],[2,3,5,7,11],[2,3,5,7,11,13]],k=[3,3,4,4,5][r],cap=r<2?200:1000;
+    for(;;){let n=1;for(let i=0;i<k;i++)n*=pick(pools[r]);if(n>=12&&n<=cap)return n;}
+  },
+  round(r){
+    const n0=this.gen(r);let cur=n0,done=false;const steps=[];
+    ctx.prompt(`<p>Break ${M(n0)} into primes. Tap a prime that divides the <b>boxed</b> number. When the boxed number is prime, tap <b>Circle it</b>.</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div class="tree-wrap"><svg id="tree" role="img" aria-label="Factor tree for ${n0}"></svg></div>
+      <div class="keys" id="keys">${[2,3,5,7,11,13].map(p=>`<button type="button" class="key" data-p="${p}">÷ ${p}</button>`).join("")}<button type="button" class="key circle" data-p="prime">Circle it</button></div>`;
+    const svg=$("#tree");drawTree(svg,n0,steps,false,false);
+    $("#keys").addEventListener("click",e=>{
+      const b=e.target.closest("button");if(!b||done)return;
+      if(b.dataset.p==="prime"){
+        if(isPrime(cur)){
+          done=true;drawTree(svg,n0,steps,true,false);
+          const flat=steps.concat(cur).sort((a,b)=>a-b);
+          play.querySelectorAll(".key").forEach(k=>k.disabled=true);
+          ctx.win(`<span class="result">${M(`${n0} = ${flat.join(" · ")} = ${expForm(factorize(n0))}`)}</span>`);
+        }else ctx.miss(`${cur} isn't prime yet. It still splits, so try a small prime.`);
+        return;
+      }
+      const p=+b.dataset.p;
+      if(cur===p){ctx.say(`${cur} ÷ ${p} = 1, so ${cur} is already prime. Tap <b>Circle it</b>.`);return;}
+      if(cur%p===0){const was=cur;cur/=p;steps.push(p);drawTree(svg,n0,steps,false,true);ctx.say(`${was} ÷ ${p} = ${cur}`);}
+      else ctx.miss(`${cur} ÷ ${p} leaves a remainder of ${cur%p}, so ${p} is not a factor of ${cur}.`);
+    });
+    S.key=e=>{const k=e.key==="p"?"prime":e.key;const b=play.querySelector(`.key[data-p="${k}"]`);if(b&&!done){b.click();}};
+  }
+};
+
+/* ---------- Station 2: LCM & GCF ---------- */
+const S2={
+  name:"Highs & Lows",sec:"LCM and GCF",rounds:5,modes:["LCM","GCF","GCF","LCM","GCF"],
+  gen(mode){
+    for(;;){
+      const ps=shuffle([2,3,5,7]).slice(0,rnd(2,3)).sort((a,b)=>a-b);
+      const ea=ps.map(()=>rnd(0,3)),eb=ps.map(()=>rnd(0,3));
+      const val=e=>ps.reduce((v,p,i)=>v*p**e[i],1);
+      const A=val(ea),B=val(eb);
+      if(A<4||B<4||A===B||A>360||B>360||A%B===0||B%A===0)continue;
+      if(ps.some((_,i)=>ea[i]===0&&eb[i]===0))continue;
+      const g=ps.map((_,i)=>Math.min(ea[i],eb[i])),l=ps.map((_,i)=>Math.max(ea[i],eb[i]));
+      if(mode==="GCF"&&val(g)===1)continue;
+      return {ps,ea,eb,A,B,ans:mode==="GCF"?g:l,val};
+    }
+  },
+  round(r){
+    const mode=this.modes[r],{ps,ea,eb,A,B,ans,val}=this.gen(mode);
+    const cur=ps.map(()=>0);let done=false;
+    ctx.prompt(`<p>Find ${M(`${mode}(${A}, ${B})`)}. Both prime factorizations are filled in. Set the power of each prime in the ${mode}.</p>`);
+    const row=(n,e)=>`<tr><th scope="row">${n} =</th>${e.map((x,i)=>`<td>${ps[i]}${sup(x)}</td>`).join("")}</tr>`;
+    const play=ctx.play();
+    play.innerHTML=`<div class="tbl-wrap"><table class="exp"><caption>Powers of each prime</caption>
+      <thead><tr><th></th>${ps.map(p=>`<th scope="col">prime ${p}</th>`).join("")}</tr></thead>
+      <tbody>${row(A,ea)}${row(B,eb)}<tr class="ans"><th scope="row">${mode} =</th>${ps.map((p,i)=>`<td id="c${i}"><div class="stepper"><button type="button" data-i="${i}" data-d="-1" aria-label="Lower the power of ${p}">−</button><output id="o${i}">${p}${sup(0)}</output><button type="button" data-i="${i}" data-d="1" aria-label="Raise the power of ${p}">+</button></div></td>`).join("")}</tr></tbody></table></div>
+      <p class="live" id="live"></p><div class="actions"><button type="button" class="btn primary" id="check">Check</button></div>`;
+    const live=()=>{$("#live").innerHTML=`${mode} = ${ps.map((p,i)=>p+sup(cur[i])).join(" · ")} = <b>${val(cur)}</b>`;};
+    live();
+    play.addEventListener("click",e=>{
+      const b=e.target.closest("button[data-d]");if(!b||done)return;
+      const i=+b.dataset.i;cur[i]=Math.max(0,Math.min(4,cur[i]+ +b.dataset.d));
+      $("#o"+i).innerHTML=ps[i]+sup(cur[i]);$("#c"+i).className="";live();
+    });
+    $("#check").onclick=()=>{
+      if(done)return;
+      const wrong=ps.map((_,i)=>cur[i]!==ans[i]);
+      wrong.forEach((w,i)=>{$("#c"+i).className=w?"wrong":"right";});
+      const nw=wrong.filter(Boolean).length;
+      if(!nw){
+        done=true;play.querySelectorAll("button").forEach(x=>x.disabled=true);
+        ctx.win(`${M(`${mode}(${A}, ${B}) = ${ps.map((p,i)=>p+sup(ans[i])).join(" · ")} = ${val(ans)}`)}`);
+      }else{
+        const rule=mode==="LCM"
+          ?"The LCM has to be a multiple of both numbers, so it takes the <b>highest</b> power of each prime."
+          :"The GCF has to divide both numbers, so it takes the <b>lowest</b> power of each prime.";
+        ctx.miss(`${nw===1?"One power is":nw+" powers are"} off (marked in red). ${rule}`);
+      }
+    };
+  }
+};
+
+/* ---------- Station 3: GCF of a polynomial ---------- */
+const S3={
+  name:"Pull It Out",sec:"GCF of a polynomial",rounds:5,
+  gen(r){
+    for(;;){
+      const k=pick(r<2?[2,3,4,5,6]:[3,4,6,8,9,10,12,13,15]);
+      const e=r===0?rnd(0,1):rnd(1,3),useY=r>=3,f=useY?rnd(1,2):0;
+      const nT=r<2?2:rnd(2,3);
+      const xs=shuffle([1,2,3]).slice(0,nT-1).concat(0).sort((a,b)=>b-a);
+      let ys=xs.map(()=>useY?rnd(0,2):0);const my=Math.min(...ys);ys=ys.map(y=>y-my);
+      const cs=xs.map((_,i)=>i===0?rnd(1,9):rnd(1,9)*pick([1,-1]));
+      if(gcdAll(cs)!==1)continue;
+      const terms=xs.map((x,i)=>({c:k*cs[i],x:e+x,y:f+ys[i]}));
+      if(terms.some(t=>Math.abs(t.c)>99))continue;
+      return {terms,k,e,f,useY,inner:xs.map((x,i)=>({c:cs[i],x,y:ys[i]}))};
+    }
+  },
+  round(r){
+    const {terms,k,e,f,useY,inner}=this.gen(r);
+    const lim={c:Math.max(...terms.map(t=>Math.abs(t.c))),x:Math.max(...terms.map(t=>t.x)),y:Math.max(...terms.map(t=>t.y))};
+    const g={c:1,x:0,y:0};let done=false;
+    ctx.prompt(`<p>Factor the greatest common factor out of ${M(poly(terms))}.</p>`);
+    const ctrl=(id,label)=>`<div class="ctrl"><span>${label}</span><div class="stepper"><button type="button" data-k="${id}" data-d="-1" aria-label="Decrease ${label}">−</button><output id="v${id}"></output><button type="button" data-k="${id}" data-d="1" aria-label="Increase ${label}">+</button></div></div>`;
+    const play=ctx.play();
+    play.innerHTML=`<div class="gcf"><div class="ctrls"><p class="lbl">Build your GCF</p>${ctrl("c","Number")}${ctrl("x","Power of <i>x</i>")}${useY?ctrl("y","Power of <i>y</i>"):""}
+      <p style="margin:6px 0 0"><span class="lbl">Your GCF</span><br><span class="m big gshow" id="gshow"></span></p></div>
+      <div><p class="lbl">Divide every term by it</p><ul class="divs" id="divs"></ul><p class="live" id="prev" style="text-align:left;margin-top:12px"></p></div></div>
+      <div class="actions"><button type="button" class="btn primary" id="check">Check</button></div>`;
+    const G=()=>term(g.c,g.x,g.y);
+    const fits=t=>t.c%g.c===0&&t.x>=g.x&&t.y>=g.y;
+    function update(){
+      $("#vc").textContent=g.c;$("#vx").textContent=g.x;if(useY)$("#vy").textContent=g.y;
+      $("#gshow").innerHTML=G();
+      $("#divs").innerHTML=terms.map(t=>{
+        const head=`${M(term(t.c,t.x,t.y))} ÷ ${M(G())}`;
+        if(fits(t))return `<li>${head} = ${M(term(t.c/g.c,t.x-g.x,t.y-g.y))}</li>`;
+        const why=[];
+        if(t.c%g.c)why.push(`${Math.abs(t.c)} ÷ ${g.c} is not whole`);
+        if(t.x<g.x)why.push(t.x===0?"this term has no <i>x</i>":`only <i>x</i>${t.x>1?sup(t.x):""} is available`);
+        if(t.y<g.y)why.push(t.y===0?"this term has no <i>y</i>":`only <i>y</i>${t.y>1?sup(t.y):""} is available`);
+        return `<li class="no">${head} doesn't work <span class="why">(${why.join("; ")})</span></li>`;
+      }).join("");
+      $("#prev").innerHTML=terms.every(fits)?`${M(poly(terms))} = ${M(`${g.c===1&&!g.x&&!g.y?"1":G()}(${poly(terms.map(t=>({c:t.c/g.c,x:t.x-g.x,y:t.y-g.y})))})`)}`:"Every term must divide evenly. Adjust the red rows.";
+    }
+    update();
+    play.addEventListener("click",ev=>{
+      const b=ev.target.closest("button[data-k]");if(!b||done)return;
+      const key=b.dataset.k;g[key]=Math.max(key==="c"?1:0,Math.min(lim[key],g[key]+ +b.dataset.d));update();
+    });
+    $("#check").onclick=()=>{
+      if(done)return;
+      if(!terms.every(fits))return ctx.miss(`${M(G())} doesn't divide every term. Look at the red rows.`);
+      if(g.c===k&&g.x===e&&g.y===f){
+        done=true;play.querySelectorAll("button").forEach(x=>x.disabled=true);
+        return ctx.win(`${M(`${poly(terms)} = ${term(k,e,f)}(${poly(inner)})`)}`);
+      }
+      const extra=term(k/g.c,e-g.x,f-g.y);
+      ctx.miss(`${M(G())} divides every term, but the leftovers still share ${M(extra)}. Pull out more.`);
+    };
+  }
+};
+
+/* ---------- Station 4: x^2 + bx + c ---------- */
+const S4={
+  name:"Pair Hunt",sec:"Trinomials with a = 1",rounds:5,
+  gen(r){
+    for(;;){
+      let p,q;
+      if(r===0){p=rnd(1,9);q=rnd(1,9);}
+      else if(r===1){p=-rnd(1,9);q=-rnd(1,9);}
+      else{p=rnd(1,12);q=-rnd(1,12);}
+      const b=p+q,c=p*q;
+      if(b===0||Math.abs(c)>72||Math.abs(c)<4)continue;
+      if(r>=2&&pairList(c).length<6)continue;
+      return {b,c};
+    }
+  },
+  round(r){
+    const {b,c}=this.gen(r);
+    const tri=poly([{c:1,x:2},{c:b,x:1},{c}]);
+    ctx.prompt(`<p>Factor ${M(tri)}. Find two numbers that <b>multiply</b> to ${M(signed(c))} and <b>add</b> to ${M(signed(b))}.</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div class="split"><div><p class="lbl">Factor pairs of ${signed(c)}. Tap one to test its sum.</p><div class="pairs" id="pairs"></div></div>
+      <div><p class="lbl">Area model</p><div id="box"></div><p class="box-note" id="bnote">The corners are known: ${M("<i>x</i>"+sup(2))} and ${M(signed(c))}. The two middle tiles must multiply to ${M(signed(c))} and add up to ${M(term(b,1))}.</p></div></div>`;
+    $("#box").innerHTML=boxHTML(["<i>x</i>","?"],["<i>x</i>","?"],[[cell("<i>x</i>"+sup(2),"sq"),cell("?<i>x</i>","unk")],[cell("?<i>x</i>","unk"),cell(signed(c),"unit",c<0)]]);
+    let misses=0;
+    pairCards($("#pairs"),c,b,(p,q)=>{
+      $("#box").innerHTML=boxHTML(["<i>x</i>",plus(p)],["<i>x</i>",plus(q)],
+        [[cell("<i>x</i>"+sup(2),"sq"),cell(term(p,1),"lin",p<0)],[cell(term(q,1),"lin",q<0),cell(signed(c),"unit",c<0)]]);
+      $("#bnote").innerHTML=`Middle tiles: ${M(`${term(p,1)}${term(q,1,0,false)} = ${term(b,1)}`)} ✓`;
+      ctx.win(`${M(`${tri} = (${lin(1,p)})(${lin(1,q)})`)}<br>Check by FOIL: ${M(`<i>x</i>${sup(2)}${term(q,1,0,false)}${term(p,1,0,false)}${term(c,0,0,false)} = ${tri}`)} ✓`);
+    },(p,q,s)=>{
+      misses++;
+      let msg=`${signed(p)} · ${paren(q)} = ${signed(c)}, but ${signed(p)} + ${paren(q)} = ${signed(s)}, not ${signed(b)}.`;
+      if(misses>=2)msg+=c>0?` Hint: since ${M("<i>c</i>")} is positive, both numbers have the same sign as ${M("<i>b</i>")} (${b>0?"positive":"negative"}).`:` Hint: since ${M("<i>c</i>")} is negative, the numbers have opposite signs, and the bigger one (in size) has the sign of ${M("<i>b</i>")}.`;
+      ctx.miss(msg);
+    });
+  }
+};
+
+/* ---------- Station 5: grouping (ac method) ---------- */
+const S5={
+  name:"Magic Number",sec:"Factor by grouping",rounds:5,
+  gen(r){
+    for(;;){
+      const a1=pick([1,2,3]),a2=pick([2,3,4,5]),b1=rnd(-7,7),b2=rnd(-7,7);
+      if(!b1||!b2||gcd(a1,b1)!==1||gcd(a2,b2)!==1)continue;
+      const a=a1*a2,b=a1*b2+a2*b1,c=b1*b2;
+      if(!b||Math.abs(a*c)>120||Math.abs(a*c)<6)continue;
+      if(r<2&&(b<0||c<0))continue;
+      return {a,b,c};
+    }
+  },
+  round(r){
+    const {a,b,c}=this.gen(r),ac=a*c;
+    const tri=poly([{c:a,x:2},{c:b,x:1},{c}]);
+    ctx.prompt(`<p>Factor ${M(tri)} by grouping.</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div class="split"><ol class="steps">
+      <li class="on" id="st1"><p class="lbl">Step 1 · Magic number</p><p>${M(`<i>a</i> · <i>c</i> = ${a} · ${paren(c)} = ${signed(ac)}`)}. Find two numbers that multiply to ${M(signed(ac))} and add to ${M(signed(b))}.</p><div class="pairs" id="pairs"></div></li>
+      <li id="st2" hidden><p class="lbl">Step 2 · Split the middle, then factor the first group</p><div class="work" id="w2"></div><div class="opts" id="o2"></div></li>
+      <li id="st3" hidden><p class="lbl">Step 3 · Factor the second group so the brackets match</p><div class="work" id="w3"></div><div class="opts" id="o3"></div></li>
+    </ol><div id="boxside" hidden><p class="lbl">Area model</p><div id="box"></div><p class="box-note">Each row label is a group's GCF. The matching bracket labels the columns.</p></div></div>`;
+    const divides=(o,ts)=>ts.every(t=>t.c%o.c===0&&(t.x||0)>=(o.x||0));
+    const leftover=(o,ts)=>poly(ts.map(t=>({c:t.c/o.c,x:(t.x||0)-(o.x||0)})));
+    function options(host,correct,pool,ts,onOK,badMsg){
+      const seen=new Set([JSON.stringify(correct)]);const opts=[correct];
+      for(const o of shuffle(pool.slice())){const key=JSON.stringify(o);if(seen.has(key)||o.c===0)continue;seen.add(key);opts.push(o);if(opts.length===3)break;}
+      host.innerHTML=shuffle(opts).map(o=>`<button type="button" class="opt" data-c="${o.c}" data-x="${o.x}">${M(term(o.c,o.x))}</button>`).join("");
+      host.addEventListener("click",e=>{
+        const btn=e.target.closest(".opt");if(!btn||btn.disabled)return;
+        const o={c:+btn.dataset.c,x:+btn.dataset.x};
+        if(o.c===correct.c&&o.x===correct.x){btn.classList.add("hit");host.querySelectorAll(".opt").forEach(x=>x.disabled=true);onOK();}
+        else{btn.classList.add("miss");btn.disabled=true;ctx.miss(badMsg(o,divides(o,ts)));}
+      });
+    }
+    pairCards($("#pairs"),ac,b,(m,n)=>{
+      $("#st1").className="ok";
+      const g1=gcd(a,m),A1=a/g1,B1=m/g1,g2=n/A1;
+      const G1={c:g1,x:1},grp1=[{c:a,x:2},{c:m,x:1}],grp2=[{c:n,x:1},{c}];
+      const L=lin(A1,B1);
+      const st2=$("#st2");st2.hidden=false;st2.className="on";
+      $("#w2").innerHTML=`<div>${M(`${tri} = (${poly(grp1)}) + (${poly(grp2)})`)}</div><div>What is the GCF of ${M(poly(grp1))}?</div>`;
+      options($("#o2"),G1,[{c:1,x:1},{c:g1,x:0},{c:2*g1,x:1},{c:g1,x:2},{c:-g1,x:1}],grp1,()=>{
+        st2.className="ok";
+        $("#w2").innerHTML=`<div>${M(`${tri} = (${poly(grp1)}) + (${poly(grp2)})`)}</div><div>${M(`= ${term(g1,1)}(${L}) + (${poly(grp2)})`)}</div>`;
+        const st3=$("#st3");st3.hidden=false;st3.className="on";
+        $("#w3").innerHTML=`<div>The first bracket is ${M(`(${L})`)}. Which GCF of ${M(poly(grp2))} leaves the same bracket?</div>`;
+        const alt=Math.abs(g2)>1?Math.sign(g2):2*g2;
+        options($("#o3"),{c:g2,x:0},[{c:-g2,x:0},{c:alt,x:0},{c:g2,x:1}],grp2,()=>{
+          st3.className="ok";
+          $("#w3").innerHTML=`<div>${M(`= ${term(g1,1)}(${L})${term(g2,0,0,false)}(${L})`)}</div><div>${M(`= (${L})(${lin(g1,g2)})`)}</div>`;
+          $("#boxside").hidden=false;
+          $("#box").innerHTML=boxHTML([term(A1,1),plus(B1)],[term(g1,1),plus(g2)],
+            [[cell(term(a,2),"sq"),cell(term(m,1),"lin",m<0)],[cell(term(n,1),"lin",n<0),cell(signed(c),"unit",c<0)]]);
+          ctx.win(`${M(`${tri} = (${L})(${lin(g1,g2)})`)}`);
+        },(o,ok)=>ok?`${M(term(o.c))} leaves ${M(`(${leftover(o,grp2)})`)}, which doesn't match ${M(`(${L})`)}. The brackets must be identical.`:`${M(term(o.c,o.x))} doesn't divide both ${M(term(n,1))} and ${M(signed(c))}.`);
+      },(o,ok)=>{
+        if(!ok)return `${M(term(o.c,o.x))} doesn't divide both terms of ${M(poly(grp1))}.`;
+        if(o.c<0)return `${M(term(o.c,o.x))} works, but with a positive leading term we keep the first group's GCF positive.`;
+        return `${M(term(o.c,o.x))} divides both terms, but ${M(`(${leftover(o,grp1)})`)} still has a common factor. Take the greatest one.`;
+      });
+    },(p,q,s)=>ctx.miss(`${signed(p)} · ${paren(q)} = ${signed(ac)}, but the sum is ${signed(s)}, not ${signed(b)}.`));
+  }
+};
+
+/* ---------- Station 6: special-case speed round ---------- */
+const NONSQ_C=[2,3,5,6,8,12,18],NONSQ_N=[2,3,5,8,12,18,20,24,27,32,45,50];
+function genPattern(){
+  const t=Math.random();
+  if(t<.35){
+    const k=rnd(1,7),m=rnd(1,10),v=rnd(0,4);
+    let a,bH,expr;
+    if(v===0){a=term(k,2);bH=String(m);expr=poly([{c:k*k,x:4},{c:-m*m}]);}
+    else if(v===1){a=term(k,1);bH=term(m,0,1);expr=poly([{c:k*k,x:2},{c:-m*m,y:2}]);}
+    else{a=term(k,1);bH=String(m);expr=poly([{c:k*k,x:2},{c:-m*m}]);}
+    return {kind:"dos",expr,why:`${M(`<i>a</i> = ${a}, <i>b</i> = ${bH}`)}: ${M(`(${a} + ${bH})(${a} ${MINUS} ${bH})`)}`};
+  }
+  if(t<.7){
+    const k=rnd(1,6),m=rnd(1,9),s=pick([1,-1]);
+    const expr=poly([{c:k*k,x:2},{c:s*2*k*m,x:1},{c:m*m}]);
+    return {kind:"ps",expr,why:`${M(`<i>a</i> = ${term(k,1)}, <i>b</i> = ${m}`)}, and ${M(`2<i>ab</i> = ${term(2*k*m,1)}`)} ✓ so it is ${M(`(${lin(k,s*m)})${sup(2)}`)}`};
+  }
+  const v=rnd(0,3),k=rnd(1,6),m=rnd(1,8);
+  if(v===0)return {kind:"none",expr:poly([{c:k*k,x:2},{c:m*m}]),why:"It's a <b>sum</b> of squares. A sum of two squares does not factor."};
+  if(v===1){
+    const s=pick([1,-1]),mid=2*k*m+pick([-2,-1,1,2]);
+    return {kind:"none",expr:poly([{c:k*k,x:2},{c:s*mid,x:1},{c:m*m}]),why:`The ends are squares, but ${M(`2<i>ab</i> = 2(${term(k,1)})(${m}) = ${term(2*k*m,1)}`)}, not ${M(term(mid,1))}.`};
+  }
+  if(v===2){
+    const s=pick([1,-1]);
+    return {kind:"none",expr:poly([{c:k*k,x:2},{c:s*2*k*m,x:1},{c:-m*m}]),why:`The last term is negative, so it can't be ${M("<i>b</i>"+sup(2))}.`};
+  }
+  if(Math.random()<.5){const c=pick(NONSQ_C);return {kind:"none",expr:poly([{c,x:2},{c:-m*m}]),why:`${c} is not a perfect square, so there's no whole-number ${M("<i>a</i>")}.`};}
+  const n=pick(NONSQ_N);return {kind:"none",expr:poly([{c:k*k,x:2},{c:-n}]),why:`${n} is not a perfect square, so there's no whole-number ${M("<i>b</i>")}.`};
+}
+const S6={
+  name:"Pattern Patrol",sec:"Special cases",rounds:1,
+  round(){
+    const LABEL={dos:"a difference of squares",ps:"a perfect square trinomial",none:"neither pattern"};
+    ctx.prompt(`<p>60 seconds. Sort each expression: <b>difference of squares</b> ${M(`<i>a</i>${sup(2)} ${MINUS} <i>b</i>${sup(2)}`)}, <b>perfect square</b> ${M(`<i>a</i>${sup(2)} ± 2<i>ab</i> + <i>b</i>${sup(2)}`)}, or <b>neither</b>. Keys 1, 2, 3 work too. Scores of 4, 8 and 12 earn one, two and three stars.</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div class="speed"><div class="timer"><div class="bar" id="bar"></div></div>
+      <div class="speed-top"><span id="clock">60.0 s</span><span id="score">Score 0</span></div>
+      <p class="big m expr" id="expr">9<i>x</i>${sup(2)} ${MINUS} 25</p>
+      <div class="choices" id="choices">
+        <button type="button" class="choice" data-k="dos" disabled><span><kbd>1</kbd> Difference of squares</span><span class="m">(<i>a</i> + <i>b</i>)(<i>a</i> ${MINUS} <i>b</i>)</span></button>
+        <button type="button" class="choice" data-k="ps" disabled><span><kbd>2</kbd> Perfect square</span><span class="m">(<i>a</i> ± <i>b</i>)${sup(2)}</span></button>
+        <button type="button" class="choice" data-k="none" disabled><span><kbd>3</kbd> Neither</span><span class="m">use another method</span></button>
+      </div></div>`;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="start">Start the clock</button>`;
+    ctx.say(`Sample: ${M(`9<i>x</i>${sup(2)} ${MINUS} 25 = (3<i>x</i>)${sup(2)} ${MINUS} 5${sup(2)}`)} is a difference of squares.`);
+    let score=0,seen=0,cur=null,last="",locked=true,t0=0,tick=null,wait=null,running=false;
+    const btns=[...play.querySelectorAll(".choice")];
+    function next(){
+      let p;do{p=genPattern();}while(p.expr===last);last=p.expr;cur=p;
+      $("#expr").innerHTML=p.expr;locked=false;btns.forEach(b=>b.disabled=false);
+    }
+    function end(){
+      running=false;clearInterval(tick);clearTimeout(wait);
+      const st=score>=12?3:score>=8?2:score>=4?1:0;
+      finish(st,`You sorted ${score} of ${seen} correctly in 60 seconds.${st<3?" Reach 12 for three stars.":""}`);
+    }
+    function answer(k){
+      if(locked||!running)return;
+      locked=true;btns.forEach(b=>b.disabled=true);seen++;
+      const ok=k===cur.kind;
+      if(ok){score++;$("#score").textContent=`Score ${score}`;ctx.say(`✓ ${M(cur.expr)} is ${LABEL[cur.kind]}. ${cur.why}`,"good");}
+      else ctx.say(`✗ ${M(cur.expr)} is ${LABEL[cur.kind]}. ${cur.why}`,"bad");
+      wait=setTimeout(next,ok?900:2200);
+    }
+    $("#start").onclick=()=>{
+      $("#actions").innerHTML="";ctx.say("");running=true;t0=performance.now();
+      tick=setInterval(()=>{
+        const left=Math.max(0,60-(performance.now()-t0)/1000);
+        $("#clock").textContent=left.toFixed(1)+" s";$("#bar").style.transform=`scaleX(${left/60})`;
+        if(left<=0)end();
+      },100);
+      next();
+    };
+    $("#choices").addEventListener("click",e=>{const b=e.target.closest(".choice");if(b)answer(b.dataset.k);});
+    S.key=e=>{const k={"1":"dos","2":"ps","3":"none"}[e.key];if(k)answer(k);};
+    S.cleanup=()=>{running=false;clearInterval(tick);clearTimeout(wait);};
+  }
+};
+
+const STATIONS=[S1,S2,S3,S4,S5,S6];
+
+$("#rail").addEventListener("click",e=>{const b=e.target.closest(".st-btn");if(b)loadStation(+b.dataset.i);});
+document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(S.key)S.key(e);});
+let armed=false;
+$("#reset").onclick=e=>{
+  if(!armed){armed=true;e.target.textContent="Tap again to erase all stars";setTimeout(()=>{armed=false;e.target.textContent="Reset stars";},4000);return;}
+  best={};store.set(best);armed=false;e.target.textContent="Stars reset";renderNav();
+};
+renderNav();startRound();
+})();
+</script>
+</body>
+</html>
