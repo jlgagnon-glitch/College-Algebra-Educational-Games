@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Par for the Line</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: same graph-paper workbench as the rest of the series, with a golf theme:
+   equations are holes played in as few moves as possible, lines are shots that must hit every flag.
+   blue = your line, green = on target, amber = rise/run path, rose = flags still to hit / slips. */
+:root{
+  --paper:#eef3f6; --grid:#dbe4eb; --card:#ffffff; --ink:#17222d; --muted:#556472; --line:#c7d3dd;
+  --sq:#2c5cc9; --sq-soft:#dce6fb; --lin:#1b845a; --lin-soft:#d5efe2;
+  --unit:#b9770a; --unit-soft:#fcecc9; --neg:#c3364d; --neg-soft:#f8dce1;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Cambria","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+    --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+    --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+  --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+  --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background-color:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:18px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3.2rem);letter-spacing:-.025em;line-height:1;margin:0}
+h1 .dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--neg);margin:0 .08em .06em;vertical-align:baseline}
+h1 .tw{color:var(--sq)}
+.sub{margin:10px 0 0;color:var(--muted);max-width:62ch}
+.total{display:flex;align-items:baseline;gap:6px;font-family:var(--f-display);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:6px 14px}
+.tot-n{font-size:1.8rem;font-weight:800;color:var(--unit);font-variant-numeric:tabular-nums}
+.tot-of{color:var(--muted);font-size:.9rem}
+.rail-wrap{overflow-x:auto;padding:4px;margin:-4px}
+.rail{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.st-btn{width:100%;height:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer;display:grid;gap:1px;align-content:start}
+.st-btn:hover{border-color:var(--sq)}
+.st-btn[aria-current="true"]{border-color:var(--sq);box-shadow:0 0 0 3px var(--sq-soft)}
+.st-num{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.st-name{font-family:var(--f-display);font-weight:600;font-size:1.02rem;line-height:1.2}
+.st-topic{font-size:.82rem;color:var(--muted)}
+.st-stars{color:var(--unit);letter-spacing:2px;font-size:.95rem;margin-top:4px}
+.stage{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:clamp(16px,3.2vw,30px);display:grid;gap:16px;min-width:0}
+.stage-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px}
+.eyebrow{margin:0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);margin:2px 0 0;letter-spacing:-.015em;text-wrap:balance}
+.dots{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.dots li{min-width:34px;height:30px;padding:0 6px;border-radius:15px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots li.now{border-color:var(--sq);color:var(--sq);font-weight:700}
+.dots li.done{background:var(--unit-soft);border-color:var(--unit);color:var(--unit);letter-spacing:-1px}
+.prompt{font-size:1.08rem;max-width:72ch}
+.prompt p{margin:0}
+.m{font-family:var(--f-math);font-size:1.18em;white-space:nowrap}
+.m i{font-style:italic}
+.m .m{font-size:1em}
+sup{font-size:.68em;line-height:0}
+.frac{display:inline-grid;vertical-align:middle;text-align:center;margin:0 .12em;line-height:1.3}
+.frac>.fn{padding:0 .25em .06em}
+.frac>.fd{border-top:1.5px solid currentColor;padding:.06em .25em 0}
+.rad{border-top:1.5px solid currentColor;padding:0 .1em}
+.lbl{margin:0 0 6px;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.play{display:grid;gap:16px;min-width:0}
+.fb{min-height:1.6em;font-size:1.02rem;padding:10px 14px;border-radius:10px;border:1.5px dashed var(--line);color:var(--muted);overflow-x:auto}
+.fb:empty{border-color:transparent;padding-block:0;min-height:0}
+.fb.good{border:1.5px solid var(--lin);background:var(--lin-soft);color:var(--ink)}
+.fb.bad{border:1.5px solid var(--neg);background:var(--neg-soft);color:var(--ink)}
+.fb-stars{color:var(--unit);letter-spacing:2px;margin-right:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.actions:empty{display:none}
+.btn{font:inherit;font-weight:700;border-radius:9px;padding:10px 18px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--card)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:3px solid var(--sq);outline-offset:2px}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}100%{transform:none}}
+@media (prefers-reduced-motion: reduce){.shake{animation:none!important}}
+.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.steps>li{border-left:3px solid var(--line);padding:2px 0 2px 14px;display:grid;gap:8px;min-width:0}
+.steps>li.on{border-left-color:var(--sq)}
+.steps>li.ok{border-left-color:var(--lin)}
+.steps p{margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;padding:8px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--sq)}
+.opt.miss{border-color:var(--neg);background:var(--neg-soft)}
+.opt.hit{border-color:var(--lin);background:var(--lin-soft)}
+.opt:disabled{cursor:default}
+.work{overflow-x:auto}
+
+/* coordinate grid */
+.gridwrap{display:flex;justify-content:center;min-width:0}
+svg.grid{width:100%;max-width:460px;height:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+svg.grid.picking{cursor:crosshair}
+svg.grid .gl{stroke:var(--line);stroke-width:1}
+svg.grid .ax{stroke:var(--ink);stroke-width:1.8}
+svg.grid .tk{font:11px var(--f-body);fill:var(--muted)}
+svg.grid .axl{font:italic 15px var(--f-math);fill:var(--ink)}
+svg.grid .pt{fill:var(--sq);stroke:var(--card);stroke-width:2}
+svg.grid .pt.good{fill:var(--lin)}
+svg.grid .pt.bad{fill:var(--neg)}
+svg.grid .pt.target{fill:var(--unit)}
+svg.grid .plab{font:700 13px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+svg.grid .plab.leg{fill:var(--unit)}
+svg.grid .ln{stroke:var(--sq);stroke-width:2.6;fill:none}
+svg.grid .ln.good{stroke:var(--lin)}
+svg.grid .seg{stroke:var(--sq);stroke-width:2.6}
+svg.grid .leg{stroke:var(--unit);stroke-width:2.4;stroke-dasharray:6 4}
+svg.grid .guide{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:4 4}
+svg.grid .ra{fill:none;stroke:var(--unit);stroke-width:1.6}
+svg.grid .circ{fill:none;stroke:var(--lin);stroke-width:2.4}
+svg.grid .ghost circle{fill:none;stroke:var(--sq);stroke-width:2}
+svg.grid .ghost text{font:700 12px var(--f-body);fill:var(--sq);paint-order:stroke;stroke:var(--card);stroke-width:4px}
+
+table.tbl{border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.tbl th,table.tbl td{padding:6px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tbl th{font-weight:400;color:var(--muted)}
+table.tbl tr.now td{background:var(--sq-soft)}
+table.tbl tr.done td{color:var(--lin)}
+
+/* speed */
+.speed{display:grid;gap:14px;justify-items:center;text-align:center}
+.timer{width:100%;height:10px;border-radius:5px;background:var(--grid);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--sq);transform-origin:left;transition:transform .1s linear}
+.speed-top{width:100%;display:flex;justify-content:space-between;font-weight:700;font-variant-numeric:tabular-nums}
+.claim{font-size:clamp(1.8rem,7vw,2.8rem);margin:0}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.choice{font:inherit;font-weight:700;padding:14px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.choice:hover:not(:disabled){border-color:var(--sq)}
+.choice:disabled{opacity:.5;cursor:default}
+kbd{font-family:var(--f-body);font-size:.75rem;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+@media (max-width:480px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.summary{display:grid;gap:10px;justify-items:start}
+.bigstars{font-size:3rem;color:var(--unit);letter-spacing:6px;margin:0;line-height:1}
+.summary p{margin:0;max-width:60ch}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;color:var(--muted);font-size:.85rem}
+.linkbtn{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+
+h1 .for{font-size:.5em;color:var(--muted);font-weight:600;letter-spacing:0}
+svg.grid .ln.given{stroke:var(--muted);stroke-width:2.2;stroke-dasharray:7 5}
+svg.grid .flag line{stroke:var(--ink);stroke-width:2}
+svg.grid .flag path{fill:var(--neg)}
+svg.grid .flag.ok path{fill:var(--lin)}
+svg.grid .flag circle{fill:var(--ink)}
+.ctrls{display:grid;gap:12px;align-content:start}
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:9px;background:var(--card)}
+.stepper button{font:inherit;font-size:1.15rem;width:38px;height:38px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:52px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;font-family:var(--f-math);font-size:1.1rem}
+.readout{margin:0;font-size:1.25rem;padding:8px 12px;border-radius:9px;background:var(--sq-soft)}
+.howto{margin:0;color:var(--muted)}
+.golf-top{display:flex;gap:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.golf-top b{color:var(--sq);font-size:1.2rem}
+.scale{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:end;max-width:640px;width:100%;margin:0 auto}
+.pan{min-height:58px;display:grid;place-items:center;padding:10px 12px;border-bottom:4px solid var(--ink);font-size:1.25rem;text-align:center;overflow-x:auto}
+.fulc{font-family:var(--f-math);font-size:1.7rem;padding:0 12px 6px}
+.scale-base{width:0;height:0;border-left:18px solid transparent;border-right:18px solid transparent;border-bottom:24px solid var(--unit);margin:-2px auto 0}
+.hist{list-style:none;margin:0;padding:0;display:grid;gap:4px;font-size:1.02rem;overflow-x:auto}
+.hist .note{color:var(--muted);font-size:.9rem;margin-left:12px;font-family:var(--f-body)}
+.lines2{display:grid;gap:8px;font-size:clamp(1.15rem,4.5vw,1.6rem);min-height:4.2em;align-content:center;max-width:100%;overflow-x:auto}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Par <span class="for">for the</span> <span class="tw">Line</span></h1>
+      <p class="sub">A golf-themed game for Math 115, Section 2.2. Solve equations in as few moves as possible, clear fractions, read slopes, and build lines that hit every flag. Five stations: a clean round earns three stars, and each slip or extra move costs one.</p>
+    </div>
+    <div class="total" id="total" aria-live="polite"></div>
+  </header>
+  <nav class="rail-wrap" aria-label="Stations"><ol class="rail" id="rail"></ol></nav>
+  <main class="stage" id="stage"></main>
+  <footer>
+    <span>Stars are saved in this browser only.</span>
+    <button class="linkbtn" id="reset" type="button">Reset stars</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const nz=n=>{let v=0;while(!v)v=rnd(-n,n);return v;};
+const MINUS="−";
+const sup=e=>`<sup>${e}</sup>`;
+const M=h=>`<span class="m">${h}</span>`;
+const fracH=(n,d)=>d==="1"?n:`<span class="frac"><span class="fn">${n}</span><span class="fd">${d}</span></span>`;
+const starStr=n=>"★".repeat(n)+"☆".repeat(3-n);
+const num=v=>(v<0?MINUS:"")+Math.abs(v);
+const pn=v=>v<0?`(${num(v)})`:num(v);
+const R=(n,d=1)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d)||1;return {n:n/g,d:d/g};};
+const rS=r=>r.d===1?num(r.n):(r.n<0?MINUS:"")+fracH(String(Math.abs(r.n)),String(r.d));
+const X="<i>x</i>",Y="<i>y</i>";
+function termV(c,v,first){const a=Math.abs(c),body=(a===1&&v)?v:(a+v);if(first)return (c<0?MINUS:"")+body;return (c<0?` ${MINUS} `:" + ")+body;}
+function coefX(m){if(m.n===0)return "";if(m.d===1)return termV(m.n,X,true);return (m.n<0?MINUS:"")+fracH(String(Math.abs(m.n)),String(m.d))+X;}
+function siRHS(m,b){const mx=coefX(m);if(b.n===0)return mx||"0";if(!mx)return rS(b);return mx+(b.n<0?` ${MINUS} `:" + ")+rS(R(Math.abs(b.n),b.d));}
+function eqStd(A,B,C){let s="",f=true;if(A){s+=termV(A,X,true);f=false;}if(B)s+=termV(B,Y,f);return s+" = "+num(C);}
+const coordTxt=(x,y)=>`(${num(x)}, ${num(y)})`;
+const radS=n=>{const s=Math.round(Math.sqrt(n));return s*s===n?String(s):`√<span class="rad">${n}</span> ≈ ${Math.sqrt(n).toFixed(2)}`;};
+
+/* ---------- coordinate grid ---------- */
+const SVGNS="http://www.w3.org/2000/svg";let gridSeq=0;
+function makeGrid(host,o){
+  const xmin=o.xmin,xmax=o.xmax,ymin=o.ymin,ymax=o.ymax,U=o.U||26,pad=22,snap=o.snap||1,tick=o.tick||2;
+  const W=(xmax-xmin)*U+2*pad,H=(ymax-ymin)*U+2*pad;
+  const X=x=>pad+(x-xmin)*U,Y=y=>pad+(ymax-y)*U;
+  const cid="clip"+(++gridSeq);
+  let h=`<div class="gridwrap"><svg class="grid" viewBox="0 0 ${W} ${H}" role="img" aria-label="Coordinate grid from ${xmin} to ${xmax}"><defs><clipPath id="${cid}"><rect x="${X(xmin)}" y="${Y(ymax)}" width="${(xmax-xmin)*U}" height="${(ymax-ymin)*U}"/></clipPath></defs><g>`;
+  for(let x=xmin;x<=xmax;x++)h+=`<line class="gl" x1="${X(x)}" y1="${Y(ymin)}" x2="${X(x)}" y2="${Y(ymax)}"/>`;
+  for(let y=ymin;y<=ymax;y++)h+=`<line class="gl" x1="${X(xmin)}" y1="${Y(y)}" x2="${X(xmax)}" y2="${Y(y)}"/>`;
+  h+=`<line class="ax" x1="${X(xmin)}" y1="${Y(0)}" x2="${X(xmax)}" y2="${Y(0)}"/><line class="ax" x1="${X(0)}" y1="${Y(ymin)}" x2="${X(0)}" y2="${Y(ymax)}"/>`;
+  for(let x=xmin;x<=xmax;x++)if(x&&x%tick===0)h+=`<text class="tk" x="${X(x)}" y="${Y(0)+14}" text-anchor="middle">${num(x)}</text>`;
+  for(let y=ymin;y<=ymax;y++)if(y&&y%tick===0)h+=`<text class="tk" x="${X(0)-5}" y="${Y(y)+4}" text-anchor="end">${num(y)}</text>`;
+  h+=`<text class="axl" x="${X(xmax)-4}" y="${Y(0)-7}" text-anchor="end">x</text><text class="axl" x="${X(0)+7}" y="${Y(ymax)+14}">y</text>`;
+  h+=`</g><g clip-path="url(#${cid})" class="L-shapes"></g><g class="L-pts"></g><g class="ghost"></g></svg></div>`;
+  host.innerHTML=h;
+  const svg=host.querySelector("svg"),shapes=svg.querySelector(".L-shapes"),pts=svg.querySelector(".L-pts"),ghost=svg.querySelector(".ghost");
+  let pickCb=null;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function at(e){
+    const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)*W/r.width,sy=(e.clientY-r.top)*H/r.height;
+    const x=clamp(Math.round((xmin+(sx-pad)/U)/snap)*snap,xmin,xmax),y=clamp(Math.round((ymax-(sy-pad)/U)/snap)*snap,ymin,ymax);
+    return {x:x||0,y:y||0};
+  }
+  svg.addEventListener("pointermove",e=>{
+    if(!pickCb){ghost.innerHTML="";return;}
+    const p=at(e),right=X(p.x)>W-90;
+    ghost.innerHTML=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="8"/><text x="${X(p.x)+(right?-11:11)}" y="${Y(p.y)-11}" text-anchor="${right?"end":"start"}">${coordTxt(p.x,p.y)}</text>`;
+  });
+  svg.addEventListener("pointerleave",()=>{ghost.innerHTML="";});
+  svg.addEventListener("click",e=>{if(!pickCb)return;const p=at(e);pickCb(p.x,p.y);});
+  const add=(layer,s)=>{const g=document.createElementNS(SVGNS,"g");g.innerHTML=s;layer.appendChild(g);return g;};
+  const api={
+    pick(cb){pickCb=cb;svg.classList.toggle("picking",!!cb);if(!cb)ghost.innerHTML="";},
+    point(x,y,cls="",label="",pos="ne"){
+      const w=pos.includes("w"),s=pos.includes("s");
+      let t=`<circle class="pt ${cls}" cx="${X(x)}" cy="${Y(y)}" r="6.5"/>`;
+      if(label)t+=`<text class="plab" x="${X(x)+(w?-10:10)}" y="${Y(y)+(s?19:-10)}" text-anchor="${w?"end":"start"}">${label}</text>`;
+      return add(pts,t);
+    },
+    text(x,y,str,cls="plab",anchor="middle",dy=0){return add(pts,`<text class="${cls}" x="${X(x)}" y="${Y(y)+dy}" text-anchor="${anchor}">${str}</text>`);},
+    line(x1,y1,x2,y2,cls=""){
+      let a,b,c,d;
+      if(x1===x2){a=c=x1;b=ymin-1;d=ymax+1;}else{const m=(y2-y1)/(x2-x1);a=xmin-1;c=xmax+1;b=y1+m*(a-x1);d=y1+m*(c-x1);}
+      return add(shapes,`<line class="ln ${cls}" x1="${X(a)}" y1="${Y(b)}" x2="${X(c)}" y2="${Y(d)}"/>`);
+    },
+    seg(x1,y1,x2,y2,cls="seg"){return add(shapes,`<line class="${cls}" x1="${X(x1)}" y1="${Y(y1)}" x2="${X(x2)}" y2="${Y(y2)}"/>`);},
+    circle(cx,cy,r){return add(shapes,`<circle class="circ" cx="${X(cx)}" cy="${Y(cy)}" r="${r*U}"/>`);},
+    rightAngle(cx,cy,tx,ty){
+      const sx=Math.sign(tx-cx)*.45,sy=Math.sign(ty-cy)*.45;
+      return add(shapes,`<polyline class="ra" points="${X(cx+sx)},${Y(cy)} ${X(cx+sx)},${Y(cy+sy)} ${X(cx)},${Y(cy+sy)}"/>`);
+    }
+  };
+  api.flag=(x,y,cls="")=>add(pts,`<g class="flag ${cls}"><line x1="${X(x)}" y1="${Y(y)}" x2="${X(x)}" y2="${Y(y)-28}"/><path d="M${X(x)} ${Y(y)-28} l17 5.5 l-17 5.5 z"/><circle cx="${X(x)}" cy="${Y(y)}" r="4"/></g>`);
+  return api;
+}
+
+/* ---------- UI helpers ---------- */
+function addStep(label,body){
+  const ol=$("#steps");ol.querySelectorAll("li.on").forEach(l=>{l.className="ok";});
+  const li=document.createElement("li");li.className="on";li.innerHTML=`<p class="lbl">${label}</p>${body}`;
+  ol.appendChild(li);return li;
+}
+function choose(host,items,onOK,mix=true){
+  const list=mix?shuffle(items.slice()):items.slice();
+  host.innerHTML=list.map((it,i)=>`<button type="button" class="opt" data-i="${i}">${it.h}</button>`).join("");
+  host.addEventListener("click",e=>{
+    const b=e.target.closest(".opt");if(!b||b.disabled)return;
+    const it=list[+b.dataset.i];
+    if(it.ok){b.classList.add("hit");host.querySelectorAll(".opt").forEach(x=>{x.disabled=true;});onOK();}
+    else{b.classList.add("miss");b.disabled=true;ctx.miss(it.why);}
+  });
+}
+const flash=g=>setTimeout(()=>g.remove(),900);
+
+/* ---------- shell ---------- */
+const store={
+  get(){try{return JSON.parse(localStorage.getItem("par-line-stars")||"{}")||{};}catch(e){return {};}},
+  set(o){try{localStorage.setItem("par-line-stars",JSON.stringify(o));}catch(e){}}
+};
+let best=store.get();
+const S={st:0,round:0,mistakes:0,roundStars:[],cleanup:null,key:null};
+function renderNav(){
+  $("#rail").innerHTML=STATIONS.map((st,i)=>`<li><button type="button" class="st-btn" data-i="${i}" aria-current="${i===S.st}"><span class="st-num">Station ${i+1}</span><span class="st-name">${st.name}</span><span class="st-topic">${st.sec}</span><span class="st-stars" aria-label="${best[i]||0} of 3 stars">${starStr(best[i]||0)}</span></button></li>`).join("");
+  const tot=STATIONS.reduce((s,_,i)=>s+(best[i]||0),0);
+  $("#total").innerHTML=`<span class="tot-n">${tot}</span><span class="tot-of">of ${STATIONS.length*3} stars</span>`;
+}
+function teardown(){if(S.cleanup){S.cleanup();S.cleanup=null;}S.key=null;}
+function loadStation(i){teardown();S.st=i;S.round=0;S.roundStars=[];renderNav();startRound();}
+function startRound(){
+  teardown();S.mistakes=0;
+  const st=STATIONS[S.st];
+  $("#stage").innerHTML=`<div class="stage-head"><div><p class="eyebrow">Station ${S.st+1} · ${st.sec}</p><h2>${st.name}</h2></div>${st.rounds>1?`<ol class="dots" id="dots" aria-label="Round progress"></ol>`:""}</div>
+  <div class="prompt" id="prompt"></div><div class="play" id="play"></div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="actions"></div>`;
+  renderDots();st.round(S.round);
+}
+function renderDots(){
+  const d=$("#dots");if(!d)return;let h="";
+  for(let i=0;i<STATIONS[S.st].rounds;i++){const s=S.roundStars[i];h+=`<li class="${s?"done":i===S.round?"now":""}" aria-label="Round ${i+1}${s?`: ${s} stars`:""}">${s?"★".repeat(s):i+1}</li>`;}
+  d.innerHTML=h;
+}
+const ctx={
+  prompt(h){$("#prompt").innerHTML=h;},
+  play(){return $("#play");},
+  say(h,k=""){const f=$("#fb");if(!f)return;f.className="fb"+(k?" "+k:"");f.innerHTML=h;},
+  miss(h){S.mistakes++;ctx.say(h,"bad");const p=$("#play");if(!p)return;p.classList.remove("shake");void p.offsetWidth;p.classList.add("shake");},
+  win(h){
+    const s=S.mistakes===0?3:S.mistakes===1?2:1;S.roundStars[S.round]=s;renderDots();
+    ctx.say(`<span class="fb-stars" aria-label="${s} stars">${starStr(s)}</span>${h}`,"good");
+    const last=S.round>=STATIONS[S.st].rounds-1;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="next">${last?"See results":"Next round"} →</button>`;
+    $("#next").onclick=()=>{
+      S.round++;
+      if(S.round>=STATIONS[S.st].rounds){const avg=S.roundStars.reduce((a,b)=>a+b,0)/S.roundStars.length;finish(Math.round(avg),`Round stars: ${S.roundStars.join(", ")}. A three-star round has no slips.`);}
+      else startRound();
+    };
+    $("#next").focus({preventScroll:true});
+  }
+};
+function finish(n,detail){
+  teardown();
+  const i=S.st;if(n>(best[i]||0)){best[i]=n;store.set(best);}
+  renderNav();
+  const nx=(i+1)%STATIONS.length;
+  $("#stage").innerHTML=`<div class="summary"><p class="eyebrow">Station ${i+1} complete</p><h2>${STATIONS[i].name}</h2>
+  <p class="bigstars" aria-label="${n} of 3 stars">${starStr(n)}</p><p>${detail}</p>
+  <div class="actions"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn primary" id="go">Station ${nx+1}: ${STATIONS[nx].name} →</button></div></div>`;
+  $("#again").onclick=()=>loadStation(i);
+  $("#go").onclick=()=>loadStation(nx);
+}
+
+/* ---------- extra helpers ---------- */
+const term=(c,xp=0,first=true)=>termV(c,xp?X+(xp>1?sup(xp):""):"",first);
+function lin(a,b){let s="",f=true;if(a){s+=term(a,1,true);f=false;}if(b||f)s+=f?num(b):term(b,0,false);return s;}
+const req=(a,b)=>a.n===b.n&&a.d===b.d;
+const lcm=(a,b)=>a*b/gcd(a,b);
+const kTimes=(k,v)=>k===1?v:k===-1?MINUS+v:num(k)+v;
+const plusC=c=>c?(c<0?` ${MINUS} ${-c}`:` + ${c}`):"";
+function stepperH(id,label){return `<div class="ctrl"><span>${label}</span><div class="stepper"><button type="button" data-k="${id}" data-d="-1" aria-label="Decrease ${label}">−</button><output id="v-${id}"></output><button type="button" data-k="${id}" data-d="1" aria-label="Increase ${label}">+</button></div></div>`;}
+function solOptions(ok,wrongs){
+  const seen=new Set([rS(ok)]),items=[{h:M(X+" = "+rS(ok)),ok:true}];
+  for(const w of wrongs){if(!w||!isFinite(w.v.n)||!w.v.d)continue;const s=rS(w.v);if(seen.has(s))continue;seen.add(s);items.push({h:M(X+" = "+s),ok:false,why:w.why});if(items.length===3)break;}
+  return items;
+}
+
+/* ---------- Station 1: Equation Golf (linear equations, 3 types) ---------- */
+function sideStr(ch){
+  let s="",first=true;
+  ch.forEach(c=>{
+    if(c.p){const k=c.k,ak=Math.abs(k);s+=(first?(k<0?MINUS:""):(k<0?` ${MINUS} `:" + "))+(ak===1?"":ak)+`(${lin(c.a,c.b)})`;first=false;}
+    else [[c.a,1],[c.b,0]].forEach(([v,xp])=>{if(!v)return;s+=term(v,xp,first);first=false;});
+  });
+  return first?"0":s;
+}
+const simp=ch=>({a:ch.reduce((s,c)=>s+(c.p?c.k:1)*c.a,0),b:ch.reduce((s,c)=>s+(c.p?c.k:1)*c.b,0)});
+const eqStr=s=>s.final?`${X} = ${rS(s.final)}`:`${sideStr(s.L)} = ${sideStr(s.R)}`;
+function gTerminal(s){
+  if(s.final)return true;if(!s.simple)return false;
+  const l=s.L[0],r=s.R[0];
+  return (l.a===1&&l.b===0&&r.a===0)||(r.a===1&&r.b===0&&l.a===0)||(l.a===0&&r.a===0);
+}
+function gMoves(s){
+  if(gTerminal(s))return [];
+  if(!s.simple)return [{label:"Distribute and combine like terms",note:"simplify each side",apply:()=>({L:[simp(s.L)],R:[simp(s.R)],simple:true})}];
+  const l=s.L[0],r=s.R[0],out=[],seen=new Set();
+  const elim=(c,xp)=>{
+    const t=term(Math.abs(c),xp,true),label=c>0?`Subtract ${M(t)} from both sides`:`Add ${M(t)} to both sides`;
+    if(seen.has(label))return;seen.add(label);
+    const dx=xp?c:0,db=xp?0:c;
+    out.push({label,note:`${c>0?"subtract":"add"} ${t}`,apply:()=>({L:[{a:l.a-dx,b:l.b-db}],R:[{a:r.a-dx,b:r.b-db}],simple:true})});
+  };
+  if(l.a)elim(l.a,1);if(l.b)elim(l.b,0);if(r.a)elim(r.a,1);if(r.b)elim(r.b,0);
+  if(l.b===0&&r.a===0&&l.a&&l.a!==1)out.push({label:`Divide both sides by ${M(num(l.a))}`,note:`divide by ${num(l.a)}`,apply:()=>({final:R(r.b,l.a)})});
+  if(r.b===0&&l.a===0&&r.a&&r.a!==1)out.push({label:`Divide both sides by ${M(num(r.a))}`,note:`divide by ${num(r.a)}`,apply:()=>({final:R(l.b,r.a)})});
+  return out;
+}
+const gKey=s=>s.final?"F"+s.final.n+"/"+s.final.d:JSON.stringify([!!s.simple,s.L,s.R]);
+function gPar(start){
+  let front=[start],d=0;const seen=new Set([gKey(start)]);
+  while(front.length&&d<10){
+    if(front.some(gTerminal))return d;
+    const nx=[];
+    front.forEach(s=>gMoves(s).forEach(mv=>{const t=mv.apply();const k=gKey(t);if(!seen.has(k)){seen.add(k);nx.push(t);}}));
+    front=nx;d++;
+  }
+  return d;
+}
+const S1={
+  name:"Equation Golf",sec:"Linear equations",rounds:5,
+  gen(r){
+    for(;;){
+      const x0=nz(6);
+      if(r===0){const a=rnd(2,6),c=rnd(1,a-1)*pick([1,-1]),b=nz(9),d=a*x0+b-c*x0;if(!d||Math.abs(d)>30)continue;return {L:[{a,b}],R:[{a:c,b:d}],simple:true};}
+      if(r===1){
+        const k=pick([-2,-3,2,3]),p=rnd(1,3),q=nz(4),e=nz(3),g=nz(3);
+        if(k*p+e===g)continue;
+        const f=k*(p*x0+q)+e*x0-g*x0;if(!f||Math.abs(f)>40)continue;
+        return {L:[{p:true,k,a:p,b:q},{a:e,b:0}],R:[{a:0,b:f},{a:g,b:0}],simple:false};
+      }
+      if(r===2||r===3){
+        if(Math.random()<.5){
+          const A=rnd(2,6),A1=rnd(1,A-1),B=nz(9),B1=nz(6),B2=r===2?B:B+nz(5);
+          if(B2-B1===0)continue;
+          return {L:[{a:A1,b:0},{a:A-A1,b:B}],R:[{a:A,b:B1},{a:0,b:B2-B1}],simple:false};
+        }
+        const k=rnd(2,4),q=nz(5);
+        return {L:[{p:true,k,a:1,b:q}],R:[{a:k,b:k*q+(r===2?0:nz(4))}],simple:false};
+      }
+      const k1=pick([-3,-2,2,3,4]),k2=pick([-2,-1,2,3]);if(k1===k2)continue;
+      const q1=nz(5),q2=nz(5),c=k1*(x0+q1)-k2*(x0+q2);
+      const Rs=[{p:true,k:k2,a:1,b:q2}];if(c)Rs.push({a:0,b:c});
+      return {L:[{p:true,k:k1,a:1,b:q1}],R:Rs,simple:false};
+    }
+  },
+  round(r){
+    let s=this.gen(r);
+    const par=gPar(s);let strokes=0;
+    ctx.prompt(`<p>Solve ${M(eqStr(s))} in as few moves as you can, then name the type of equation. Every move does the same thing to both sides. Par is the fewest moves possible.</p>`);
+    ctx.play().innerHTML=`<div class="golf-top"><span>Moves <b id="strokes">0</b></span><span>Par <b>${par}</b></span></div>
+      <div class="scale"><div class="pan" id="lp"></div><div class="fulc">=</div><div class="pan" id="rp"></div></div><div class="scale-base" aria-hidden="true"></div>
+      <ol class="hist" id="hist"></ol>
+      <ol class="steps" id="steps"></ol>`;
+    const hist=$("#hist");
+    const show=(note)=>{
+      if(s.final){$("#lp").innerHTML=M(X);$("#rp").innerHTML=M(rS(s.final));}
+      else{$("#lp").innerHTML=M(sideStr(s.L));$("#rp").innerHTML=M(sideStr(s.R));}
+      hist.insertAdjacentHTML("beforeend",`<li>${M(eqStr(s))}${note?`<span class="note">(${note})</span>`:""}</li>`);
+    };
+    show("");
+    const li=addStep("Your move",`<div class="opts" id="moves"></div>`);
+    const host=$("#moves");
+    let moves=[];
+    const renderMoves=()=>{moves=gMoves(s);host.innerHTML=moves.map((m,i)=>`<button type="button" class="opt" data-i="${i}">${m.label}</button>`).join("");};
+    host.addEventListener("click",e=>{
+      const b=e.target.closest(".opt");if(!b)return;
+      const mv=moves[+b.dataset.i];s=mv.apply();strokes++;$("#strokes").textContent=strokes;show(mv.note);
+      if(gTerminal(s))classify();else renderMoves();
+    });
+    renderMoves();
+    const classify=()=>{
+      host.innerHTML="";li.className="ok";
+      let type,why;
+      if(s.final){type="c";why=`One value works: ${M(X+" = "+rS(s.final))}.`;}
+      else{
+        const l=s.L[0],rr=s.R[0];
+        if(l.a===0&&rr.a===0){type=l.b===rr.b?"i":"n";why=type==="i"?`The ${M(X)}'s dropped out and left ${M(`${num(l.b)} = ${num(rr.b)}`)}, which is always true. Any ${M(X)} works.`:`The ${M(X)}'s dropped out and left ${M(`${num(l.b)} = ${num(rr.b)}`)}, which is never true. No ${M(X)} works.`;}
+        else{type="c";const v=l.a===1?rr.b:l.b;why=`One value works: ${M(X+" = "+num(v))}.`;}
+      }
+      const li2=addStep("What type of equation is it?",`<div class="opts"></div>`);
+      choose($(".opts",li2),[
+        {h:"Conditional (one solution)",ok:type==="c",why},
+        {h:"Identity (every x works)",ok:type==="i",why},
+        {h:"Inconsistent (no solution)",ok:type==="n",why}
+      ],()=>{
+        const over=Math.max(0,strokes-par);S.mistakes+=over;
+        const tname={c:"conditional",i:"an identity",n:"inconsistent"}[type];
+        ctx.win(`${strokes<=par?`Made par in ${strokes} moves.`:`${strokes} moves, ${over} over par of ${par}.`} The equation is ${tname}. ${why}`);
+      },false);
+    };
+  }
+};
+
+/* ---------- Station 2: rational equations (Ex 2–5) ---------- */
+const xm=r=>lin(1,-r);
+const S2={
+  name:"Clear the Fractions",sec:"Rational equations",rounds:5,
+  gen(r){
+    const type=r<4?r:rnd(0,3);
+    for(;;){
+      if(type===0){
+        const p=pick([2,3,4,5,6]),q=pick([2,3,4,5,6]);if(q===p)continue;
+        const D=pick([2,3,4,5]),A=rnd(1,9),B=rnd(1,9),C=rnd(1,9),s=pick([1,-1]);
+        const L=lcm(lcm(p,q),D);if(L>30)continue;
+        const t1=A*L/p,t2=B*L/q,l=t1+s*t2,rc=C*L/D;if(!l)continue;
+        const x=R(l,rc),op=s>0?"+":MINUS;
+        const lcdW=[];if(p*q*D!==L)lcdW.push({h:`${p*q*D}${X}`,why:`${M(p*q*D+X)} works as a common denominator, but it isn't the lowest.`});
+        lcdW.push({h:`${L}`,why:`The ${M(X)} in the denominators has to be cleared too.`},{h:`${L}${X}${sup(2)}`,why:`${M(X)} appears only to the first power in the denominators.`});
+        return {
+          eq:`${fracH(String(A),p+X)} ${op} ${fracH(String(B),q+X)} = ${fracH(String(C),String(D))}`,
+          lcd:`${L}${X}`,lcdW:lcdW.slice(0,2),
+          clr:`${t1} ${op} ${t2} = ${termV(rc,X,true)}`,
+          clrW:[{h:`${t1} ${op} ${t2} = ${fracH(String(C),String(D))}`,why:"Multiply <b>every</b> term by the LCD, including the right side."},
+                {h:`${termV(t1,X,true)} ${op} ${termV(t2,X,true)} = ${termV(rc,X,true)}`,why:`The ${M(X)} in the LCD cancels the ${M(X)} in each left denominator: ${M(`${L}${X} · ${fracH(String(A),p+X)} = ${t1}`)}.`}],
+          x,solW:[{v:R(rc,l),why:`Divide by the coefficient of ${M(X)}: ${M(`${num(l)} = ${termV(rc,X,true)}`)} gives ${M(X+" = "+rS(x))}.`},{v:R(-l,rc),why:"Check the sign when you divide."},{v:R(l+rc,1),why:`${M(`${num(l)} = ${termV(rc,X,true)}`)}: divide both sides by ${rc}.`}],
+          work:`${t1} ${op} ${t2} = ${termV(rc,X,true)} ⟹ ${num(l)} = ${termV(rc,X,true)} ⟹ ${X} = ${rS(x)}`,
+          bad:[0]
+        };
+      }
+      if(type===1){
+        const rr=nz(8),a=rnd(1,9),b=rnd(1,9);if(a===b)continue;
+        const N=-b*rr,Dn=a-b;if(N%Dn)continue;const x0=N/Dn;if(x0===0||x0===rr)continue;
+        return {
+          eq:`${fracH(String(a),xm(rr))} = ${fracH(String(b),X)}`,
+          lcd:`${X}(${xm(rr)})`,lcdW:[{h:xm(rr),why:`That clears ${M(xm(rr))} but not the ${M(X)} denominator.`},{h:X,why:`That clears ${M(X)} but not ${M(xm(rr))}.`}],
+          clr:`${termV(a,X,true)} = ${b}(${xm(rr)})`,
+          clrW:[{h:`${a}(${xm(rr)}) = ${termV(b,X,true)}`,why:`Each numerator is multiplied by the factor its own denominator is missing: ${M(String(a))} by ${M(X)}, and ${M(String(b))} by ${M(`(${xm(rr)})`)}.`},
+                {h:`${termV(a,X,true)} = ${termV(b,X,true)}${plusC(-rr)}`,why:`Distribute ${M(String(b))} to both terms: ${M(`${b}(${xm(rr)}) = ${termV(b,X,true)}${plusC(-b*rr)}`)}.`}],
+          x:R(x0),solW:[{v:R(a*rr,a-b),why:"Check which side gets which factor when you clear the fractions."},{v:R(-rr,a-b),why:`Distribute ${M(String(b))} to both terms of ${M(`(${xm(rr)})`)}.`},{v:R(-x0),why:"Check the signs as you move terms."}],
+          work:`${termV(a,X,true)} = ${termV(b,X,true)}${plusC(-b*rr)} ⟹ ${termV(a-b,X,true)} = ${num(-b*rr)} ⟹ ${X} = ${num(x0)}`,
+          bad:[0,rr]
+        };
+      }
+      if(type===2){
+        const rr=nz(6),s=nz(9);if(s===rr)continue;
+        const x=R(2*s+rr,3);
+        return {
+          eq:`${fracH(X,xm(rr))} = ${fracH(String(s),xm(rr))} ${MINUS} ${fracH("1","2")}`,
+          lcd:`2(${xm(rr)})`,lcdW:[{h:xm(rr),why:`The ${M(fracH("1","2"))} needs a factor of 2 in the LCD.`},{h:`2(${xm(rr)})${sup(2)}`,why:`${M(`(${xm(rr)})`)} appears only to the first power.`}],
+          clr:`2${X} = ${num(2*s)} ${MINUS} (${xm(rr)})`,
+          clrW:[{h:`2${X} = ${num(2*s)} ${MINUS} ${xm(rr)}`,why:`Keep the parentheses: ${M(`${MINUS}(${xm(rr)}) = ${MINUS}${X}${plusC(rr)}`)}. The minus applies to both terms.`},
+                {h:`2${X} = ${num(2*s)} ${MINUS} 1`,why:`${M(`${fracH("1","2")} · 2(${xm(rr)}) = (${xm(rr)})`)}, not 1.`}],
+          x,solW:[{v:R(2*s-rr,3),why:`${M(`${MINUS}(${xm(rr)}) = ${MINUS}${X}${plusC(rr)}`)}: distribute the minus to both terms.`},{v:R(2*s-1,2),why:`Multiply ${M(fracH("1","2"))} by the whole LCD ${M(`2(${xm(rr)})`)}.`},{v:R(2*s+rr,1),why:`Don't forget to divide by 3 at the end.`}],
+          work:`2${X} = ${num(2*s)} ${MINUS} ${X}${plusC(rr)} ⟹ 3${X} = ${num(2*s+rr)} ⟹ ${X} = ${rS(x)}`,
+          bad:[rr]
+        };
+      }
+      const p=nz(5),q=nz(5);if(q===p)continue;
+      const a=rnd(1,5),b=rnd(1,5),c=nz(9);
+      const x=R(c+a*q+b*p,a+b);if(req(x,R(p))||req(x,R(q)))continue;
+      const den=poly2(1,-(p+q),p*q);
+      return {
+        eq:`${fracH(String(a),xm(p))} + ${fracH(String(b),xm(q))} = ${fracH(num(c),den)}`,
+        lcd:`(${xm(p)})(${xm(q)})`,lcdW:[{h:`(${xm(p)})(${xm(q)})(${den})`,why:`${M(den)} already factors as ${M(`(${xm(p)})(${xm(q)})`)}. Don't repeat it.`},{h:`(${xm(p)})`,why:`That doesn't clear ${M(`(${xm(q)})`)}.`}],
+        clr:`${a}(${xm(q)}) + ${b}(${xm(p)}) = ${num(c)}`,
+        clrW:[{h:`${a}(${xm(p)}) + ${b}(${xm(q)}) = ${num(c)}`,why:`${M(fracH(String(a),xm(p)))} gets multiplied by the factor it is missing, ${M(`(${xm(q)})`)}.`},
+              {h:`${a}(${xm(q)}) + ${b}(${xm(p)}) = ${num(c)}(${xm(p)})(${xm(q)})`,why:"The right side's denominator is the whole LCD, so it cancels completely."}],
+        x,solW:[{v:R(c+a*p+b*q,a+b),why:"Check which factor multiplies each numerator."},{v:R(c-a*q-b*p,a+b),why:"Watch the signs when you distribute."},{v:R(c,a+b),why:"Distribute and keep the constant terms."}],
+        work:`${termV(a+b,X,true)}${plusC(-(a*q+b*p))} = ${num(c)} ⟹ ${X} = ${rS(x)}`,
+        bad:[p,q]
+      };
+    }
+  },
+  round(r){
+    const g=this.gen(r);
+    ctx.prompt(`<p>Solve ${M(g.eq)}</p>`);
+    ctx.play().innerHTML=`<ol class="steps" id="steps"></ol>`;
+    const s1=addStep("Step 1 · Find the LCD",`<p>What is the LCD of all the denominators?</p><div class="opts"></div>`);
+    choose($(".opts",s1),[{h:M(g.lcd),ok:true}].concat(g.lcdW.map(w=>({h:M(w.h),ok:false,why:w.why}))),()=>{
+      ctx.say("");
+      const s2=addStep("Step 2 · Multiply every term by the LCD",`<p>Multiply both sides by ${M(g.lcd)}. What equation is left?</p><div class="opts"></div>`);
+      choose($(".opts",s2),[{h:M(g.clr),ok:true}].concat(g.clrW.map(w=>({h:M(w.h),ok:false,why:w.why}))),()=>{
+        ctx.say("");
+        const s3=addStep("Step 3 · Solve",`<p>Solve ${M(g.clr)}.</p><div class="opts"></div>`);
+        choose($(".opts",s3),solOptions(g.x,g.solW),()=>{
+          ctx.win(`${M(g.work)}. Check: ${M(X+" = "+rS(g.x))} doesn't make any denominator zero ✓`);
+        });
+      });
+    });
+  }
+};
+function poly2(a,b,c){let s=term(a,2,true);if(b)s+=term(b,1,false);if(c)s+=term(c,0,false);return s;}
+
+/* ---------- Station 3: slope (Ex 6–8) ---------- */
+const S3={
+  name:"Rise & Run",sec:"Slope and intercept",rounds:5,
+  gen(r){
+    for(;;){
+      if(r<=2){
+        const A={x:rnd(-7,7),y:rnd(-7,7)};let dx=rnd(2,7)*pick([1,-1]),dy=rnd(2,7)*pick([1,-1]);
+        if(r===0)dy=Math.sign(dx)*Math.abs(dy);
+        if(r===1)dy=-Math.sign(dx)*Math.abs(dy);
+        if(r===2){if(Math.random()<.5)dy=0;else dx=0;}
+        const B={x:A.x+dx,y:A.y+dy};
+        if(Math.abs(B.x)>7||Math.abs(B.y)>7)continue;
+        return {A,B};
+      }
+      if(r===3)return {m:R(nz(5),pick([1,2,3,4])),b:nz(8)};
+      const a=nz(4),c=nz(9),d=nz(9);if(c===d)continue;
+      return {a,c,d};
+    }
+  },
+  round(r){
+    const g=this.gen(r);
+    ctx.play().innerHTML=`<div class="split"><div id="gh"></div><div><div class="ctrls" id="ctrls"></div><ol class="steps" id="steps"></ol></div></div>`;
+    const G=makeGrid($("#gh"),{xmin:-8,xmax:8,ymin:-8,ymax:8,U:24});
+    if(r<=2){
+      const {A,B}=g;
+      ctx.prompt(`<p>Find the slope of the line through ${M("A"+coordTxt(A.x,A.y))} and ${M("B"+coordTxt(B.x,B.y))}. Set the <b>run</b> (left or right) and the <b>rise</b> (up or down) so the path from A lands on B.</p>`);
+      G.point(A.x,A.y,"",`A ${coordTxt(A.x,A.y)}`,(A.x<=B.x?"w":"e")+(A.y<B.y?"s":"n"));
+      G.point(B.x,B.y,"",`B ${coordTxt(B.x,B.y)}`,(B.x<A.x?"w":"e")+(B.y<A.y?"s":"n"));
+      $("#ctrls").innerHTML=stepperH("run","Run")+stepperH("rise","Rise")+`<div class="actions"><button type="button" class="btn primary" id="check">Check the path</button></div>`;
+      const st={run:0,rise:0};let els=[],locked=false;
+      const draw=()=>{
+        els.forEach(e=>e.remove());
+        $("#v-run").textContent=num(st.run);$("#v-rise").textContent=num(st.rise);
+        const ex=A.x+st.run,ey=A.y+st.rise,hit=ex===B.x&&ey===B.y;
+        els=[G.seg(A.x,A.y,ex,A.y,"leg"),G.seg(ex,A.y,ex,ey,"leg"),G.point(ex,ey,hit?"good":"target")];
+      };
+      draw();
+      $("#ctrls").addEventListener("click",e=>{
+        const b=e.target.closest("button[data-k]");if(!b||locked)return;
+        const k=b.dataset.k,base=k==="run"?A.x:A.y;
+        st[k]=Math.max(-8-base,Math.min(8-base,st[k]+ +b.dataset.d));draw();
+      });
+      $("#check").onclick=()=>{
+        if(locked)return;
+        const ex=A.x+st.run,ey=A.y+st.rise;
+        if(ex!==B.x||ey!==B.y)return ctx.miss(`Your path ends at ${M(coordTxt(ex,ey))}, not at B. The run is the change in ${M(X)}; the rise is the change in ${M(Y)}.`);
+        locked=true;$("#ctrls").querySelectorAll("button").forEach(x=>{x.disabled=true;});ctx.say("");
+        const run=st.run,rise=st.rise;let items;
+        if(run===0)items=[{h:"Undefined",ok:true},{h:"0",ok:false,why:"A vertical line has run 0, and you can't divide by 0. The slope is undefined. (Slope 0 is a horizontal line.)"},{h:M(num(rise)),ok:false,why:"Slope is rise over run, and the run is 0. You can't divide by 0."}];
+        else if(rise===0)items=[{h:M("0"),ok:true},{h:"Undefined",ok:false,why:`A horizontal line has rise 0, so ${M(`<i>m</i> = ${fracH("0",num(run))} = 0`)}. (Undefined slope is a vertical line.)`},{h:M(num(run)),ok:false,why:"Slope is rise over run, and the rise is 0."}];
+        else{
+          const m=R(rise,run);items=[{h:M(rS(m)),ok:true}];
+          const fl=R(run,rise),ng=R(-rise,run);
+          if(!req(fl,m))items.push({h:M(rS(fl)),ok:false,why:"Slope is rise over run, not run over rise."});
+          items.push({h:M(rS(ng)),ok:false,why:`Check the sign: the line goes ${m.n>0?"up":"down"} from left to right.`});
+        }
+        const li=addStep("What is the slope?",`<p>Rise ${M(num(rise))}, run ${M(num(run))}.</p><div class="opts"></div>`);
+        choose($(".opts",li),items,()=>{
+          G.line(A.x,A.y,B.x,B.y,"good");
+          const frac=fracH(`${num(B.y)} ${MINUS} ${pn(A.y)}`,`${num(B.x)} ${MINUS} ${pn(A.x)}`);
+          ctx.win(M(`<i>m</i> = ${fracH(`${Y}<sub>2</sub> ${MINUS} ${Y}<sub>1</sub>`,`${X}<sub>2</sub> ${MINUS} ${X}<sub>1</sub>`)} = ${frac} = ${run===0?"undefined":rS(R(rise,run))}`)+(run===0?" (vertical line)":rise===0?" (horizontal line)":""));
+        });
+      };
+      return;
+    }
+    $("#ctrls").remove();
+    if(r===3){
+      const {m,b}=g,E=`${Y} = ${siRHS(m,R(b))}`;
+      ctx.prompt(`<p>Find the slope and the ${M(Y)}-intercept of ${M(E)}.</p>`);
+      const s1=addStep("Slope",`<p>Compare with ${M(`${Y} = <i>m</i>${X} + <i>b</i>`)}. What is ${M("<i>m</i>")}?</p><div class="opts"></div>`);
+      choose($(".opts",s1),[{h:M(rS(m)),ok:true},{h:M(num(b)),ok:false,why:`${M("<i>b</i>")} is the constant term. The slope is the coefficient of ${M(X)}.`},{h:M(rS(R(-m.n,m.d))),ok:false,why:"Keep the sign that's in front of the x-term."}],()=>{
+        ctx.say("");
+        const s2=addStep("y-intercept",`<div class="opts"></div>`);
+        choose($(".opts",s2),[{h:M(coordTxt(0,b)),ok:true},{h:M(coordTxt(b,0)),ok:false,why:`The ${M(Y)}-intercept is on the ${M(Y)}-axis, where ${M(X+" = 0")}.`},{h:M(coordTxt(0,-b)),ok:false,why:`Read the sign of ${M("<i>b</i>")} straight from the equation.`}],()=>{
+          G.point(0,b,"good",coordTxt(0,b),"ne");G.line(0,b,m.d,b+m.n,"good");
+          ctx.win(`${M(`<i>m</i> = ${rS(m)}`)} and the ${M(Y)}-intercept is ${M(coordTxt(0,b))}.`);
+        });
+      });
+      return;
+    }
+    const {a,c,d}=g,E=`${num(c)} ${MINUS} ${Y} = ${termV(a,X,true)}${plusC(d)}`,k=c-d;
+    ctx.prompt(`<p>Find the slope and the ${M(Y)}-intercept of ${M(E)}. Solve for ${M(Y)} first.</p>`);
+    const s1=addStep("Solve for y",`<p>Which is ${M(E)} in slope-intercept form?</p><div class="opts"></div>`);
+    choose($(".opts",s1),[
+      {h:M(`${Y} = ${siRHS(R(-a),R(k))}`),ok:true},
+      {h:M(`${Y} = ${siRHS(R(a),R(-k))}`),ok:false,why:`After subtracting ${num(c)}: ${M(`${MINUS}${Y} = ${termV(a,X,true)}${plusC(-k)}`)}. Divide <b>every</b> term by ${M(MINUS+"1")}.`},
+      {h:M(`${Y} = ${siRHS(R(-a),R(c+d))}`),ok:false,why:`Subtract ${M(num(c))} from both sides, then divide every term by ${M(MINUS+"1")}.`}
+    ],()=>{
+      ctx.say("");
+      const s2=addStep("Read off m and b",`<div class="opts"></div>`);
+      choose($(".opts",s2),[
+        {h:M(`<i>m</i> = ${num(-a)}, ${Y}-int ${coordTxt(0,k)}`),ok:true},
+        {h:M(`<i>m</i> = ${num(-a)}, ${Y}-int ${coordTxt(k,0)}`),ok:false,why:`The ${M(Y)}-intercept is on the ${M(Y)}-axis, where ${M(X+" = 0")}.`},
+        {h:M(`<i>m</i> = ${num(k)}, ${Y}-int ${coordTxt(0,-a)}`),ok:false,why:`The slope is the coefficient of ${M(X)}; the constant is ${M("<i>b</i>")}.`}
+      ],()=>{
+        G.point(0,k,"good",coordTxt(0,k),"ne");G.line(0,k,1,k-a,"good");
+        ctx.win(`${M(`${Y} = ${siRHS(R(-a),R(k))}`)}: ${M(`<i>m</i> = ${num(-a)}`)}, ${M(Y)}-intercept ${M(coordTxt(0,k))}.`);
+      });
+    });
+  }
+};
+
+/* ---------- Station 4: build a line (Ex 9–10, 15–16) ---------- */
+function givenForm(p,q,b0){
+  if(Math.random()<.5){let A=-p,B=q,C=q*b0;if(A<0){A=-A;B=-B;C=-C;}return eqStd(A,B,C);}
+  return `${termV(p,X,true)}${plusC(q*b0)} = ${termV(q,Y,true)}`;
+}
+const S4={
+  name:"Line Drive",sec:"Writing equations of lines",rounds:5,
+  gen(r){
+    const type=r<4?r:rnd(0,3);
+    for(;;){
+      let m,holes,given=null;
+      if(type===0){m=R(nz(4));holes=[{x:rnd(-5,5),y:rnd(-7,7)}];}
+      else if(type===1){
+        const q=rnd(1,4),p=nz(5),t=pick([1,2]);const P1={x:rnd(-6,6),y:rnd(-7,7)},P2={x:P1.x+q*t,y:P1.y+p*t};
+        if(Math.abs(P2.x)>7||Math.abs(P2.y)>9)continue;m=R(p,q);holes=[P1,P2];
+      }else{
+        const p=nz(3),q=rnd(1,3),b0=nz(6),m0=R(p,q);
+        given={m:m0,b:b0,html:givenForm(m0.n,m0.d,b0)};
+        m=type===2?m0:R(-m0.d,m0.n);
+        const P={x:rnd(-5,5),y:rnd(-7,7)};
+        if(P.y*m0.d===m0.n*P.x+b0*m0.d)continue;
+        holes=[P];
+      }
+      const P=holes[0],b=R(P.y*m.d-m.n*P.x,m.d);
+      if(Math.abs(b.n/b.d)>10||m.d>6)continue;
+      if(given&&type===2&&req(b,R(given.b)))continue;
+      return {type,m,b,holes,given};
+    }
+  },
+  round(r){
+    const {type,m,b,holes,given}=this.gen(r),P=holes[0];
+    const prompts=[
+      `Build the line through ${M(coordTxt(P.x,P.y))} with slope ${M(rS(m))}.`,
+      `Build the line through ${M(coordTxt(holes[0].x,holes[0].y))} and ${M(coordTxt(holes[1]?holes[1].x:0,holes[1]?holes[1].y:0))}.`,
+      `Build the line through ${M(coordTxt(P.x,P.y))} that is <b>parallel</b> to ${M(given?given.html:"")} (dashed).`,
+      `Build the line through ${M(coordTxt(P.x,P.y))} that is <b>perpendicular</b> to ${M(given?given.html:"")} (dashed).`
+    ];
+    ctx.prompt(`<p>${prompts[type]} Hit every flag.</p>`);
+    ctx.play().innerHTML=`<div class="split"><div id="gh"></div><div class="ctrls"><p class="howto">Slope ${M("<i>m</i>")} = rise ÷ run. The ${M(Y)}-intercept ${M("<i>b</i>")} moves in steps of 1/run.</p>${stepperH("rise","Rise")}${stepperH("run","Run")}${stepperH("k","y-intercept b")}<p class="readout" id="readout"></p><div class="actions"><button type="button" class="btn primary" id="check">Take the shot</button></div></div></div>`;
+    const G=makeGrid($("#gh"),{xmin:-8,xmax:8,ymin:-10,ymax:10,U:22});
+    if(given)G.line(0,given.b,given.m.d,given.b+given.m.n,"given");
+    const st={rise:1,run:1,k:0};let lineEl=null,flagEls=[],done=false;
+    const draw=()=>{
+      const mm=R(st.rise,st.run),bb=R(st.k,st.run);
+      $("#v-rise").textContent=num(st.rise);$("#v-run").textContent=st.run;$("#v-k").innerHTML=rS(bb);
+      $("#readout").innerHTML=M(`${Y} = ${siRHS(mm,bb)}`);
+      if(lineEl)lineEl.remove();lineEl=G.line(0,st.k/st.run,st.run,st.k/st.run+st.rise);
+      flagEls.forEach(e=>e.remove());
+      flagEls=holes.map(h=>G.flag(h.x,h.y,st.rise*h.x+st.k===h.y*st.run?"ok":""));
+    };
+    draw();
+    ctx.play().querySelector(".ctrls").addEventListener("click",e=>{
+      const btn=e.target.closest("button[data-k]");if(!btn||done)return;
+      const k=btn.dataset.k,d=+btn.dataset.d;
+      if(k==="run"){const nr=Math.max(1,Math.min(6,st.run+d));st.k=Math.round(st.k/st.run*nr);st.run=nr;}
+      else if(k==="rise")st.rise=Math.max(-30,Math.min(30,st.rise+d));
+      else st.k=Math.max(-12*st.run,Math.min(12*st.run,st.k+d));
+      draw();
+    });
+    $("#check").onclick=()=>{
+      if(done)return;
+      const mm=R(st.rise,st.run),bb=R(st.k,st.run);
+      const miss=holes.find(h=>st.rise*h.x+st.k!==h.y*st.run);
+      if(type!==1&&!req(mm,m)){
+        const msg=[`The slope needs to be ${M(rS(m))}.`,"",
+          `Parallel lines have the <b>same</b> slope. Put ${M(given?given.html:"")} in ${M(`${Y} = <i>m</i>${X} + <i>b</i>`)} form to read its slope.`,
+          `Perpendicular slopes are negative reciprocals: ${M("<i>m</i><sub>1</sub> · <i>m</i><sub>2</sub> = "+MINUS+"1")}. Find the given line's slope first.`][type];
+        return ctx.miss(msg);
+      }
+      if(miss)return ctx.miss(`The line misses the flag at ${M(coordTxt(miss.x,miss.y))}. ${type===1?`Use ${M(`<i>m</i> = ${fracH(`${Y}<sub>2</sub> ${MINUS} ${Y}<sub>1</sub>`,`${X}<sub>2</sub> ${MINUS} ${X}<sub>1</sub>`)}`)} for the slope, then adjust ${M("<i>b</i>")}.`:`Keep the slope and adjust ${M("<i>b</i>")}: try ${M(`${Y} ${MINUS} ${Y}<sub>1</sub> = <i>m</i>(${X} ${MINUS} ${X}<sub>1</sub>)`)}.`}`);
+      done=true;ctx.play().querySelectorAll(".ctrls button").forEach(x=>{x.disabled=true;});
+      lineEl.firstChild.classList.add("good");
+      const ps=`${Y}${plusC(-P.y)} = ${m.d===1?(m.n===1?"":m.n===-1?MINUS:num(m.n)):((m.n<0?MINUS:"")+fracH(String(Math.abs(m.n)),String(m.d)))}(${lin(1,-P.x)})`;
+      ctx.win(`Point-slope: ${M(ps)}, so ${M(`${Y} = ${siRHS(mm,bb)}`)}.`);
+    };
+  }
+};
+
+/* ---------- Station 5: parallel / perpendicular speed round (Ex 14) ---------- */
+const SLOPES=[R(1,2),R(2),R(3),R(1,3),R(2,3),R(3,2),R(1),R(4),R(1,4)];
+function lineHTML(L){
+  if(L.v!==undefined)return `${X} = ${num(L.v)}`;
+  const m=L.m,b=L.b;if(m.n===0)return `${Y} = ${num(b)}`;
+  const form=pick(["si","std","re"]);
+  if(form==="si")return `${Y} = ${siRHS(m,R(b))}`;
+  return givenForm(m.n,m.d,b);
+}
+const slopeTxt=L=>L.v!==undefined?"undefined":rS(L.m);
+function genPair(){
+  const b1=nz(6);let b2=nz(6);while(b2===b1)b2=nz(6);
+  if(Math.random()<.15){
+    const k=rnd(0,2);
+    if(k===0)return {A:{v:nz(6)},B:{m:R(0),b:b1},kind:"perp",why:"A vertical line and a horizontal line meet at a right angle."};
+    if(k===1)return {A:{v:b1},B:{v:b2},kind:"par",why:"Two vertical lines never meet."};
+    return {A:{m:R(0),b:b1},B:{m:R(0),b:b2},kind:"par",why:"Two horizontal lines (slope 0) never meet."};
+  }
+  const s=pick(SLOPES),m1=R(s.n*pick([1,-1]),s.d),kind=pick(["par","perp","none"]);
+  let m2,why;
+  if(kind==="par"){m2=m1;why="Same slope, different intercepts: parallel.";}
+  else if(kind==="perp"){m2=R(-m1.d,m1.n);why=`${M("<i>m</i><sub>1</sub> · <i>m</i><sub>2</sub> = "+MINUS+"1")}: perpendicular.`;}
+  else{
+    const opts=[{m:R(-m1.n,m1.d),w:"Opposite slopes aren't perpendicular. You need the negative <b>reciprocal</b>."},{m:R(m1.d,m1.n),w:"The reciprocal alone isn't enough. Perpendicular slopes are negative reciprocals."},{m:pick(SLOPES),w:`The slopes differ and their product isn't ${MINUS}1.`}]
+      .filter(o=>!req(o.m,m1)&&!req(o.m,R(-m1.d,m1.n)));
+    let o=opts.length?pick(opts):null;
+    while(!o){const c=R(pick(SLOPES).n*pick([1,-1]),pick(SLOPES).d);if(!req(c,m1)&&!req(c,R(-m1.d,m1.n)))o={m:c,w:`The slopes differ and their product isn't ${MINUS}1.`};}
+    m2=o.m;why=o.w;
+  }
+  return {A:{m:m1,b:b1},B:{m:m2,b:b2},kind,why};
+}
+const S5={
+  name:"Parallel Parking",sec:"Parallel or perpendicular",rounds:1,
+  round(){
+    const LBL={par:"Parallel",perp:"Perpendicular",none:"Neither"},KEYS=["par","perp","none"];
+    ctx.prompt(`<p>60 seconds. Find each line's slope and decide whether the lines are <b>parallel</b> (same slope), <b>perpendicular</b> (${M("<i>m</i><sub>1</sub> · <i>m</i><sub>2</sub> = "+MINUS+"1")}), or <b>neither</b>. Keys 1, 2, 3 work too. Scores of 3, 6 and 9 earn one, two and three stars.</p>`);
+    ctx.play().innerHTML=`<div class="speed"><div class="timer"><div class="bar" id="bar"></div></div>
+      <div class="speed-top"><span id="clock">60.0 s</span><span id="score">Score 0</span></div>
+      <div class="lines2" id="claim"><div>${M(`2${Y} ${MINUS} ${X} = 10`)}</div><div>${M(`${X} + 4 = 2${Y}`)}</div></div>
+      <div class="choices" id="choices">${KEYS.map((k,i)=>`<button type="button" class="choice" data-k="${k}" disabled><kbd>${i+1}</kbd> ${LBL[k]}</button>`).join("")}</div></div>`;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="start">Start the clock</button>`;
+    ctx.say(`Sample: both lines become ${M(`${Y} = ${fracH("1","2")}${X} + <i>b</i>`)} with different ${M("<i>b</i>")}, so they are parallel.`);
+    let score=0,seen=0,cur=null,locked=true,t0=0,tick=null,wait=null,running=false;
+    const btns=[...ctx.play().querySelectorAll(".choice")];
+    function next(){
+      cur=genPair();
+      $("#claim").innerHTML=`<div>${M(lineHTML(cur.A))}</div><div>${M(lineHTML(cur.B))}</div>`;
+      locked=false;btns.forEach(b=>{b.disabled=false;});
+    }
+    function end(){
+      running=false;clearInterval(tick);clearTimeout(wait);
+      const st=score>=9?3:score>=6?2:score>=3?1:0;
+      finish(st,`You classified ${score} of ${seen} pairs correctly in 60 seconds.${st<3?" Reach 9 for three stars.":""}`);
+    }
+    function answer(k){
+      if(locked||!running)return;
+      locked=true;btns.forEach(b=>{b.disabled=true;});seen++;
+      const ok=k===cur.kind,info=`${M(`<i>m</i><sub>1</sub> = ${slopeTxt(cur.A)}, <i>m</i><sub>2</sub> = ${slopeTxt(cur.B)}`)}. ${cur.why}`;
+      if(ok){score++;$("#score").textContent=`Score ${score}`;ctx.say(`✓ ${LBL[cur.kind]}. ${info}`,"good");}
+      else ctx.say(`✗ ${LBL[cur.kind]}. ${info}`,"bad");
+      wait=setTimeout(next,ok?1200:2800);
+    }
+    $("#start").onclick=()=>{
+      $("#actions").innerHTML="";ctx.say("");running=true;t0=performance.now();
+      tick=setInterval(()=>{
+        const left=Math.max(0,60-(performance.now()-t0)/1000);
+        $("#clock").textContent=left.toFixed(1)+" s";$("#bar").style.transform=`scaleX(${left/60})`;
+        if(left<=0)end();
+      },100);
+      next();
+    };
+    $("#choices").addEventListener("click",e=>{const b=e.target.closest(".choice");if(b)answer(b.dataset.k);});
+    S.key=e=>{const k=KEYS[+e.key-1];if(k)answer(k);};
+    S.cleanup=()=>{running=false;clearInterval(tick);clearTimeout(wait);};
+  }
+};
+
+const STATIONS=[S1,S2,S3,S4,S5];
+
+$("#rail").addEventListener("click",e=>{const b=e.target.closest(".st-btn");if(b)loadStation(+b.dataset.i);});
+document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(S.key)S.key(e);});
+let armed=false;
+$("#reset").onclick=e=>{
+  if(!armed){armed=true;e.target.textContent="Tap again to erase all stars";setTimeout(()=>{armed=false;e.target.textContent="Reset stars";},4000);return;}
+  best={};store.set(best);armed=false;e.target.textContent="Stars reset";renderNav();
+};
+renderNav();startRound();
+})();
+</script>
+</body>
+</html>
