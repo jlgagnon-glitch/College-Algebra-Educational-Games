@@ -1,0 +1,784 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Over &amp; Out</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: same graph-paper workbench as Branch & Box (same series). The fraction bar is the hero:
+   factors sit as tiles over and under it, and a matched pair is struck out in rose.
+   blue = selected tile, amber = number tiles, green = correct, rose = cancel strike / slips. */
+:root{
+  --paper:#eef3f6; --grid:#dbe4eb; --card:#ffffff; --ink:#17222d; --muted:#556472; --line:#c7d3dd;
+  --sq:#2c5cc9; --sq-soft:#dce6fb; --lin:#1b845a; --lin-soft:#d5efe2;
+  --unit:#b9770a; --unit-soft:#fcecc9; --neg:#c3364d; --neg-soft:#f8dce1;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Cambria","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+    --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+    --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+  --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+  --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{
+  background-color:var(--paper); color:var(--ink); font-family:var(--f-body); font-size:16px; line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+  background-size:24px 24px;
+}
+.wrap{max-width:1000px;margin:0 auto;display:grid;gap:18px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3.2rem);letter-spacing:-.025em;line-height:1;margin:0;display:inline-grid;justify-items:center}
+h1 .over{padding:0 .1em}
+h1 .out{border-top:5px solid var(--neg);padding:0 .1em;color:var(--muted)}
+.sub{margin:10px 0 0;color:var(--muted);max-width:60ch}
+.total{display:flex;align-items:baseline;gap:6px;font-family:var(--f-display);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:6px 14px}
+.tot-n{font-size:1.8rem;font-weight:800;color:var(--unit);font-variant-numeric:tabular-nums}
+.tot-of{color:var(--muted);font-size:.9rem}
+.rail-wrap{overflow-x:auto;padding:4px;margin:-4px}
+.rail{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.st-btn{width:100%;height:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer;display:grid;gap:1px;align-content:start}
+.st-btn:hover{border-color:var(--sq)}
+.st-btn[aria-current="true"]{border-color:var(--sq);box-shadow:0 0 0 3px var(--sq-soft)}
+.st-num{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.st-name{font-family:var(--f-display);font-weight:600;font-size:1.02rem;line-height:1.2}
+.st-topic{font-size:.82rem;color:var(--muted)}
+.st-stars{color:var(--unit);letter-spacing:2px;font-size:.95rem;margin-top:4px}
+.stage{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:clamp(16px,3.2vw,30px);display:grid;gap:16px;min-width:0}
+.stage-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px}
+.eyebrow{margin:0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);margin:2px 0 0;letter-spacing:-.015em;text-wrap:balance}
+.dots{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.dots li{min-width:34px;height:30px;padding:0 6px;border-radius:15px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots li.now{border-color:var(--sq);color:var(--sq);font-weight:700}
+.dots li.done{background:var(--unit-soft);border-color:var(--unit);color:var(--unit);letter-spacing:-1px}
+.prompt{font-size:1.08rem;max-width:72ch}
+.prompt p{margin:0}
+.m{font-family:var(--f-math);font-size:1.18em;white-space:nowrap}
+.m i{font-style:italic}
+.m .m{font-size:1em}
+sup{font-size:.68em;line-height:0}
+.frac{display:inline-grid;vertical-align:middle;text-align:center;margin:0 .12em;line-height:1.3}
+.frac>.fn{padding:0 .25em .06em}
+.frac>.fd{border-top:1.5px solid currentColor;padding:.06em .25em 0}
+.lbl{margin:0 0 6px;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.play{display:grid;gap:16px;min-width:0}
+.fb{min-height:1.6em;font-size:1.02rem;padding:10px 14px;border-radius:10px;border:1.5px dashed var(--line);color:var(--muted);overflow-x:auto}
+.fb:empty{border-color:transparent;padding-block:0;min-height:0}
+.fb.good{border:1.5px solid var(--lin);background:var(--lin-soft);color:var(--ink)}
+.fb.bad{border:1.5px solid var(--neg);background:var(--neg-soft);color:var(--ink)}
+.fb-stars{color:var(--unit);letter-spacing:2px;margin-right:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.actions:empty{display:none}
+.btn{font:inherit;font-weight:700;border-radius:9px;padding:10px 18px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--card)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:3px solid var(--sq);outline-offset:2px}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}100%{transform:none}}
+
+/* the cancel board */
+.board{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:14px 20px;padding:14px 0;overflow-x:auto}
+.bfrac{display:grid;justify-items:center;gap:8px;min-width:0}
+.brow{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:6px;min-height:48px}
+.bbar{height:3px;width:100%;min-width:130px;background:var(--ink);border-radius:2px}
+.bop{font-family:var(--f-math);font-size:2rem;color:var(--muted)}
+.tile{font:inherit;font-family:var(--f-math);font-size:1.25rem;padding:6px 11px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer;white-space:nowrap}
+.tile .m{font-size:1em}
+.tile:hover:not(:disabled){border-color:var(--sq)}
+.tile.num{background:var(--unit-soft);border-color:var(--unit)}
+.tile.sel{border-color:var(--sq);background:var(--sq-soft);box-shadow:0 0 0 3px var(--sq-soft)}
+.tile.ghost{cursor:default;border-style:dashed;color:var(--muted);background:transparent}
+.tile.gone{animation:gone .32s forwards;background-image:linear-gradient(to top right,transparent calc(50% - 2px),var(--neg) calc(50% - 2px),var(--neg) calc(50% + 2px),transparent calc(50% + 2px))}
+@keyframes gone{60%{opacity:1;transform:none}to{opacity:0;transform:scale(.7) translateY(-4px)}}
+.tile:disabled{cursor:default}
+.polybtn{font:inherit;display:grid;justify-items:center;gap:2px;padding:6px 14px;border-radius:9px;border:1.5px dashed var(--sq);background:transparent;color:var(--ink);cursor:pointer}
+.polybtn .tap{font-size:.72rem;letter-spacing:.06em;text-transform:uppercase;color:var(--sq)}
+.polytxt{font-size:1.2rem;padding:6px 8px}
+.flip{padding:5px 14px;font-size:.9rem}
+@media (prefers-reduced-motion: reduce){.shake,.tile.gone{animation:none!important}}
+
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.steps>li{border-left:3px solid var(--line);padding:2px 0 2px 14px;display:grid;gap:8px;min-width:0}
+.steps>li.on{border-left-color:var(--sq)}
+.steps>li.ok{border-left-color:var(--lin)}
+.steps p{margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;padding:8px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--sq)}
+.opt.miss{border-color:var(--neg);background:var(--neg-soft)}
+.opt.hit{border-color:var(--lin);background:var(--lin-soft)}
+.opt:disabled{cursor:default}
+.work{overflow-x:auto;padding:2px 0}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{font:inherit;padding:6px 14px;border-radius:18px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.chip[aria-pressed="true"]{border-color:var(--sq);background:var(--sq-soft);font-weight:700}
+.howto{margin:0;color:var(--muted);max-width:72ch}
+
+/* speed round */
+.speed{display:grid;gap:14px;justify-items:center;text-align:center}
+.timer{width:100%;height:10px;border-radius:5px;background:var(--grid);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--sq);transform-origin:left;transition:transform .1s linear}
+.speed-top{width:100%;display:flex;justify-content:space-between;font-weight:700;font-variant-numeric:tabular-nums}
+.claim{font-size:clamp(1.4rem,5vw,2.1rem);min-height:3em;display:grid;place-items:center;max-width:100%;overflow-x:auto}
+.choices{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}
+.choice{font:inherit;font-weight:700;padding:14px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.choice:hover:not(:disabled){border-color:var(--sq)}
+.choice:disabled{opacity:.5;cursor:default}
+kbd{font-family:var(--f-body);font-size:.75rem;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+
+.summary{display:grid;gap:10px;justify-items:start}
+.bigstars{font-size:3rem;color:var(--unit);letter-spacing:6px;margin:0;line-height:1}
+.summary p{margin:0;max-width:60ch}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;color:var(--muted);font-size:.85rem}
+.linkbtn{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="over">Over</span><span class="out">&amp; Out</span></h1>
+      <p class="sub">A rational expressions game for Math 115, Section 1.6. Factors are tiles over and under the fraction bar. Match a factor on top with the same factor on the bottom and they cancel out. Five stations, five rounds each: a clean round earns three stars, and each slip costs one.</p>
+    </div>
+    <div class="total" id="total" aria-live="polite"></div>
+  </header>
+  <nav class="rail-wrap" aria-label="Stations"><ol class="rail" id="rail"></ol></nav>
+  <main class="stage" id="stage"></main>
+  <footer>
+    <span>Stars are saved in this browser only.</span>
+    <button class="linkbtn" id="reset" type="button">Reset stars</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+const gcdAll=arr=>arr.reduce((g,v)=>gcd(g,v),0);
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const nz=n=>{let v=0;while(!v)v=rnd(-n,n);return v;};
+const MINUS="−";
+const sup=e=>`<sup>${e}</sup>`;
+function varPart(xp){return xp?"<i>x</i>"+(xp>1?sup(xp):""):"";}
+function term(c,xp=0,first=true){
+  const v=varPart(xp),a=Math.abs(c);
+  const body=(a===1&&v)?v:(a+v);
+  if(first)return (c<0?MINUS:"")+body;
+  return (c<0?` ${MINUS} `:" + ")+body;
+}
+function poly(ts){ts=ts.filter(t=>t.c!==0);if(!ts.length)return "0";return ts.map((t,i)=>term(t.c,t.x||0,i===0)).join("");}
+const signed=n=>n<0?MINUS+(-n):String(n);
+const M=h=>`<span class="m">${h}</span>`;
+const fracH=(n,d)=>d==="1"?n:`<span class="frac"><span class="fn">${n}</span><span class="fd">${d}</span></span>`;
+const starStr=n=>"★".repeat(n)+"☆".repeat(3-n);
+
+/* ---------- polynomials (coefficient arrays, index = power) ---------- */
+const trim=p=>{p=p.slice();while(p.length>1&&p[p.length-1]===0)p.pop();return p;};
+const pmul=(p,q)=>{const r=Array(p.length+q.length-1).fill(0);p.forEach((a,i)=>q.forEach((b,j)=>{r[i+j]+=a*b;}));return trim(r);};
+const padd=(p,q,s=1)=>{const n=Math.max(p.length,q.length),r=[];for(let i=0;i<n;i++)r.push((p[i]||0)+s*(q[i]||0));return trim(r);};
+const peq=(p,q)=>{p=trim(p);q=trim(q);return p.length===q.length&&p.every((v,i)=>v===q[i]);};
+const peval=(p,x)=>p.reduce((s,c,i)=>s+c*x**i,0);
+function pstr(p){
+  p=trim(p);const ts=[];
+  for(let i=p.length-1;i>=0;i--)if(p[i])ts.push({c:p[i],x:i});
+  if(!ts.length)return "0";
+  if(ts.length>1&&ts[0].c<0&&ts[ts.length-1].c>0)ts.reverse();
+  return poly(ts);
+}
+const nTerms=p=>trim(p).filter(c=>c!==0).length;
+
+/* ---------- factors: {a,b} means ax + b; a = 0 is a number ---------- */
+const X={a:1,b:0};
+const fkey=f=>f.a+","+f.b;
+const isNum=f=>f.a===0;
+const isOpp=(f,g)=>!isNum(f)&&!isNum(g)&&f.a===-g.a&&f.b===-g.b;
+const zero=f=>(-f.b/f.a)||0;
+function inner(f){
+  if(f.a===0)return signed(f.b);
+  if(f.b===0)return term(f.a,1);
+  if(f.a>0)return poly([{c:f.a,x:1},{c:f.b}]);
+  return signed(f.b)+term(f.a,1,false);
+}
+const fmtTile=f=>(f.a!==0&&f.b!==0)?`(${inner(f)})`:inner(f);
+const fpoly=f=>trim([f.b,f.a]);
+const prodPoly=list=>list.reduce((p,f)=>pmul(p,fpoly(f)),[1]);
+function productStr(list){
+  let coef=1;const groups=new Map();
+  list.forEach(f=>{if(isNum(f))coef*=f.b;else{const k=fkey(f),g=groups.get(k);groups.set(k,{f,n:(g?g.n:0)+1});}});
+  const gs=[...groups.values()].sort((u,v)=>(u.f.b===0?-1:0)-(v.f.b===0?-1:0));
+  if(!gs.length)return signed(coef);
+  const single=gs.length===1&&gs[0].n===1&&coef===1;
+  const parts=gs.map(({f,n})=>{
+    if(f.b===0)return term(f.a,1)+(n>1?sup(n):"");
+    if(single)return inner(f);
+    return `(${inner(f)})`+(n>1?sup(n):"");
+  });
+  return (coef===1?"":coef===-1?MINUS:signed(coef))+parts.join("");
+}
+function fparts(list){let num=1;const cnt=new Map();list.forEach(f=>{if(isNum(f))num*=f.b;else{const k=fkey(f),g=cnt.get(k);cnt.set(k,{f,n:(g?g.n:0)+1});}});return {num,cnt};}
+function fromParts(num,cnt){const out=[];if(num!==1)out.push({a:0,b:num});cnt.forEach(({f,n})=>{for(let i=0;i<n;i++)out.push(f);});return out;}
+const norm=list=>{const p=fparts(list);return fromParts(p.num,p.cnt);};
+function lcdOf(A,B){
+  const a=fparts(A),b=fparts(B),cnt=new Map(a.cnt);
+  b.cnt.forEach((v,k)=>{const c=cnt.get(k);if(!c||c.n<v.n)cnt.set(k,v);});
+  return fromParts(a.num*b.num/gcd(a.num,b.num),cnt);
+}
+function dividesF(D,C){const d=fparts(D),c=fparts(C);if(c.num%d.num)return false;for(const [k,v] of d.cnt){const g=c.cnt.get(k);if((g?g.n:0)<v.n)return false;}return true;}
+function quotF(C,D){const c=fparts(C),d=fparts(D),cnt=new Map();c.cnt.forEach((v,k)=>{const g=d.cnt.get(k);const n=v.n-(g?g.n:0);if(n>0)cnt.set(k,{f:v.f,n});});return fromParts(c.num/d.num,cnt);}
+const fsame=(A,B)=>productStr(norm(A))===productStr(norm(B));
+
+/* ---------- the cancel board ---------- */
+function makeBoard(host,spec){
+  let tiles=[],nid=0,sel=null,flipped=false,locked=false;
+  const div=spec.op==="÷";
+  const rows=spec.fracs.map(f=>({
+    n:{fs:f.n,poly:prodPoly(f.n),done:!!spec.factored||f.n.length===0},
+    d:{fs:f.d,poly:prodPoly(f.d),done:!!spec.factored||f.d.length===0}
+  }));
+  const pushRow=(i,pos)=>rows[i][pos].fs.forEach(f=>tiles.push({id:nid++,f,fi:i,pos}));
+  rows.forEach((r,i)=>{if(r.n.done)pushRow(i,"n");if(r.d.done)pushRow(i,"d");});
+  function rowH(i,pos){
+    const r=rows[i][pos];
+    if(!r.done)return spec.tapFactor
+      ?`<button type="button" class="polybtn" data-fi="${i}" data-pos="${pos}">${M(pstr(r.poly))}<span class="tap">tap to factor</span></button>`
+      :`<span class="polytxt">${M(pstr(r.poly))}</span>`;
+    const ts=tiles.filter(t=>t.fi===i&&t.pos===pos);
+    if(!ts.length)return `<span class="tile ghost">${M("1")}</span>`;
+    return ts.map(t=>`<button type="button" class="tile${isNum(t.f)?" num":""}${sel===t.id?" sel":""}" data-id="${t.id}" aria-pressed="${sel===t.id}" ${locked?"disabled":""}>${M(fmtTile(t.f))}</button>`).join("");
+  }
+  function render(){
+    let h=`<div class="board">`;
+    rows.forEach((r,i)=>{
+      if(i>0)h+=`<span class="bop">${div&&!flipped?"÷":"·"}</span>`;
+      h+=`<div class="bfrac"><div class="brow">${rowH(i,"n")}</div><div class="bbar"></div><div class="brow">${rowH(i,"d")}</div>${div&&i===1&&!flipped&&!locked?`<button type="button" class="btn flip" id="flipbtn">Flip it ↕</button>`:""}</div>`;
+    });
+    const st=tiles.find(t=>t.id===sel);
+    if(st&&!isNum(st.f)&&st.f.a<0&&!locked){
+      h+=`</div><div class="actions" style="justify-content:center"><button type="button" class="btn flip" id="neg1">Factor out ${M(MINUS+"1")} from ${M(fmtTile(st.f))}</button>`;
+    }
+    host.innerHTML=h+"</div>";
+  }
+  function explain(A,B){
+    const a=M(fmtTile(A)),b=M(fmtTile(B));
+    if(isNum(A)&&isNum(B))return `${a} and ${b} share no common factor.`;
+    if(!isNum(A)&&!isNum(B)&&A.b===0)return `${a} is only one term of ${b}. You can only cancel whole factors.`;
+    if(!isNum(A)&&!isNum(B)&&B.b===0)return `${b} is only one term of ${a}. You can only cancel whole factors.`;
+    if(!isNum(A)&&!isNum(B)&&Math.abs(A.a)===Math.abs(B.a)&&Math.abs(A.b)===Math.abs(B.b))return `${a} and ${b} are different factors. Check the signs.`;
+    return `${a} and ${b} are not the same factor, so they can't cancel.`;
+  }
+  function animateOut(ids,then){
+    locked=true;
+    ids.forEach(id=>{const el=host.querySelector(`.tile[data-id="${id}"]`);if(el)el.classList.add("gone");});
+    setTimeout(()=>{locked=false;then();render();},matchMedia("(prefers-reduced-motion: reduce)").matches?0:300);
+  }
+  function tryCancel(top,bot){
+    const A=top.f,B=bot.f;
+    if(div&&!flipped&&top.fi!==bot.fi){render();ctx.miss("This is division. Flip the second fraction first (multiply by its reciprocal), then cancel across the fractions.");return;}
+    const drop=(...ts)=>{tiles=tiles.filter(t=>!ts.includes(t));};
+    if(fkey(A)===fkey(B)){
+      animateOut([top.id,bot.id],()=>drop(top,bot));
+      ctx.say(`${M(fmtTile(A))} on top cancels with ${M(fmtTile(B))} on the bottom.`);
+    }else if(isOpp(A,B)){
+      const neg=A.a<0?A:B,pos=A.a<0?B:A;
+      render();
+      ctx.miss(`Close, but ${M(fmtTile(A))} and ${M(fmtTile(B))} are <b>not</b> the same factor, so they don't cancel yet. First factor ${M(MINUS+"1")} out: ${M(`${inner(neg)} = ${MINUS}1(${inner(pos)})`)}. Tap ${M(fmtTile(neg))} and press <b>Factor out ${MINUS}1</b>. Then the matching factors cancel.`);
+    }else if(isNum(A)&&isNum(B)&&gcd(A.b,B.b)>1){
+      const g=gcd(A.b,B.b);
+      animateOut([top.id,bot.id],()=>{
+        const i1=tiles.indexOf(top),nb=A.b/g,db=B.b/g;
+        if(nb!==1)tiles.splice(i1,1,{...top,f:{a:0,b:nb}});else drop(top);
+        if(db!==1){const i2=tiles.indexOf(bot);tiles.splice(i2,1,{...bot,f:{a:0,b:db}});}else drop(bot);
+      });
+      ctx.say(`Both ${A.b} and ${B.b} divide by ${g}.`);
+    }else{render();ctx.miss(explain(A,B));}
+  }
+  host.addEventListener("click",e=>{
+    if(locked)return;
+    const pb=e.target.closest(".polybtn");
+    if(pb){const i=+pb.dataset.fi,pos=pb.dataset.pos,r=rows[i][pos];r.done=true;pushRow(i,pos);render();ctx.say(`Factored: ${M(pstr(r.poly)+" = "+productStr(r.fs))}`);return;}
+    if(e.target.closest("#neg1")){
+      const t=tiles.find(x=>x.id===sel);if(!t)return;
+      const flipped1={a:-t.f.a,b:-t.f.b},i=tiles.indexOf(t);
+      tiles.splice(i,1,{id:nid++,f:{a:0,b:-1},fi:t.fi,pos:t.pos},{id:nid++,f:flipped1,fi:t.fi,pos:t.pos});
+      sel=null;render();
+      ctx.say(`${M(`${inner(t.f)} = ${MINUS}1(${inner(flipped1)})`)}. Check: ${M(`${MINUS}1(${inner(flipped1)}) = ${inner(t.f)}`)}. Now ${M(fmtTile(flipped1))} can cancel with a matching factor.`);
+      return;
+    }
+    if(e.target.closest("#flipbtn")){
+      flipped=true;sel=null;const r=rows[1];[r.n,r.d]=[r.d,r.n];
+      tiles.forEach(t=>{if(t.fi===1)t.pos=t.pos==="n"?"d":"n";});
+      render();ctx.say("Flipped. Dividing by a fraction is the same as multiplying by its reciprocal.");return;
+    }
+    const tb=e.target.closest(".tile[data-id]");if(!tb)return;
+    const t=tiles.find(x=>x.id===+tb.dataset.id);if(!t)return;
+    if(sel===null||sel===t.id){sel=sel===t.id?null:t.id;render();return;}
+    const s=tiles.find(x=>x.id===sel);
+    if(!s||s.pos===t.pos){sel=t.id;render();return;}
+    sel=null;
+    tryCancel(s.pos==="n"?s:t,s.pos==="n"?t:s);
+  });
+  render();
+  return {
+    reveal(i,pos){const r=rows[i][pos];if(!r.done){r.done=true;pushRow(i,pos);render();}},
+    pending(){
+      if(rows.some(r=>!r.n.done||!r.d.done))return "Factor every polynomial first. Tap each one.";
+      if(div&&!flipped)return "This is division. Flip the second fraction first.";
+      const N=tiles.filter(t=>t.pos==="n"),D=tiles.filter(t=>t.pos==="d");
+      for(const a of N)for(const b of D){
+        if(isOpp(a.f,b.f))
+          return `Not done yet: ${M(fmtTile(a.f))} and ${M(fmtTile(b.f))} are opposites. Factor ${M(MINUS+"1")} out of ${M(fmtTile(a.f.a<0?a.f:b.f))}, and then they cancel.`;
+        if(fkey(a.f)===fkey(b.f)||(isNum(a.f)&&isNum(b.f)&&gcd(a.f.b,b.f.b)>1))
+          return `Not done yet: ${M(fmtTile(a.f))} on top and ${M(fmtTile(b.f))} on the bottom can still cancel.`;
+      }
+      return null;
+    },
+    result(){
+      const N=tiles.filter(t=>t.pos==="n").map(t=>t.f),D=tiles.filter(t=>t.pos==="d").map(t=>t.f);
+      return fracH(N.length?productStr(N):"1",D.length?productStr(D):"1");
+    },
+    lock(){locked=true;sel=null;render();}
+  };
+}
+
+/* ---------- small UI helpers ---------- */
+function addStep(label,body){
+  const ol=$("#steps");ol.querySelectorAll("li.on").forEach(l=>{l.className="ok";});
+  const li=document.createElement("li");li.className="on";li.innerHTML=`<p class="lbl">${label}</p>${body}`;
+  ol.appendChild(li);return li;
+}
+function choose(host,items,onOK){
+  const list=shuffle(items.slice());
+  host.innerHTML=list.map((it,i)=>`<button type="button" class="opt" data-i="${i}">${it.h}</button>`).join("");
+  host.addEventListener("click",e=>{
+    const b=e.target.closest(".opt");if(!b||b.disabled)return;
+    const it=list[+b.dataset.i];
+    if(it.ok){b.classList.add("hit");host.querySelectorAll(".opt").forEach(x=>{x.disabled=true;});onOK();}
+    else{b.classList.add("miss");b.disabled=true;ctx.miss(it.why);}
+  });
+}
+function uniqueBy(items,key,max){const seen=new Set(),out=[];for(const it of items){const k=key(it);if(seen.has(k))continue;seen.add(k);out.push(it);if(out.length===max)break;}return out;}
+
+/* ---------- shell ---------- */
+const store={
+  get(){try{return JSON.parse(localStorage.getItem("over-out-stars")||"{}")||{};}catch(e){return {};}},
+  set(o){try{localStorage.setItem("over-out-stars",JSON.stringify(o));}catch(e){}}
+};
+let best=store.get();
+const S={st:0,round:0,mistakes:0,roundStars:[],cleanup:null,key:null};
+function renderNav(){
+  $("#rail").innerHTML=STATIONS.map((st,i)=>`<li><button type="button" class="st-btn" data-i="${i}" aria-current="${i===S.st}"><span class="st-num">Station ${i+1}</span><span class="st-name">${st.name}</span><span class="st-topic">${st.sec}</span><span class="st-stars" aria-label="${best[i]||0} of 3 stars">${starStr(best[i]||0)}</span></button></li>`).join("");
+  const tot=STATIONS.reduce((s,_,i)=>s+(best[i]||0),0);
+  $("#total").innerHTML=`<span class="tot-n">${tot}</span><span class="tot-of">of ${STATIONS.length*3} stars</span>`;
+}
+function teardown(){if(S.cleanup){S.cleanup();S.cleanup=null;}S.key=null;}
+function loadStation(i){teardown();S.st=i;S.round=0;S.roundStars=[];renderNav();startRound();}
+function startRound(){
+  teardown();S.mistakes=0;
+  const st=STATIONS[S.st];
+  $("#stage").innerHTML=`<div class="stage-head"><div><p class="eyebrow">Station ${S.st+1} · ${st.sec}</p><h2>${st.name}</h2></div>${st.rounds>1?`<ol class="dots" id="dots" aria-label="Round progress"></ol>`:""}</div>
+  <div class="prompt" id="prompt"></div><div class="play" id="play"></div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="actions"></div>`;
+  renderDots();st.round(S.round);
+}
+function renderDots(){
+  const d=$("#dots");if(!d)return;let h="";
+  for(let i=0;i<STATIONS[S.st].rounds;i++){
+    const s=S.roundStars[i];
+    h+=`<li class="${s?"done":i===S.round?"now":""}" aria-label="Round ${i+1}${s?`: ${s} stars`:""}">${s?"★".repeat(s):i+1}</li>`;
+  }
+  d.innerHTML=h;
+}
+const ctx={
+  prompt(h){$("#prompt").innerHTML=h;},
+  play(){return $("#play");},
+  say(h,k=""){const f=$("#fb");if(!f)return;f.className="fb"+(k?" "+k:"");f.innerHTML=h;},
+  miss(h){S.mistakes++;ctx.say(h,"bad");const p=$("#play");if(!p)return;p.classList.remove("shake");void p.offsetWidth;p.classList.add("shake");},
+  win(h){
+    const s=S.mistakes===0?3:S.mistakes===1?2:1;S.roundStars[S.round]=s;renderDots();
+    ctx.say(`<span class="fb-stars" aria-label="${s} stars">${starStr(s)}</span>${h}`,"good");
+    const last=S.round>=STATIONS[S.st].rounds-1;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="next">${last?"See results":"Next round"} →</button>`;
+    $("#next").onclick=()=>{
+      S.round++;
+      if(S.round>=STATIONS[S.st].rounds){
+        const avg=S.roundStars.reduce((a,b)=>a+b,0)/S.roundStars.length;
+        finish(Math.round(avg),`Round stars: ${S.roundStars.join(", ")}. A three-star round has no slips.`);
+      }else startRound();
+    };
+    $("#next").focus({preventScroll:true});
+  }
+};
+function finish(n,detail){
+  teardown();
+  const i=S.st;if(n>(best[i]||0)){best[i]=n;store.set(best);}
+  renderNav();
+  const nx=(i+1)%STATIONS.length;
+  $("#stage").innerHTML=`<div class="summary"><p class="eyebrow">Station ${i+1} complete</p><h2>${STATIONS[i].name}</h2>
+  <p class="bigstars" aria-label="${n} of 3 stars">${starStr(n)}</p><p>${detail}</p>
+  <div class="actions"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn primary" id="go">Station ${nx+1}: ${STATIONS[nx].name} →</button></div></div>`;
+  $("#again").onclick=()=>loadStation(i);
+  $("#go").onclick=()=>loadStation(nx);
+}
+
+/* ---------- Station 1: simplify (Ex 1–3) ---------- */
+function factorOptions(fs){
+  const P=prodPoly(fs),lins=fs.map((f,i)=>(!isNum(f)&&f.b!==0)?i:-1).filter(i=>i>=0);
+  const flip=(list,idx)=>list.map((f,i)=>idx.includes(i)?{a:f.a,b:-f.b}:f);
+  const cands=[flip(fs,lins),flip(fs,lins.slice(0,1)),flip(fs,lins.slice(-1)),
+    fs.map(f=>isNum(f)?{a:0,b:f.b+1}:f),
+    fs.map((f,i)=>i===lins[0]?{a:f.a,b:f.b+(f.b>0?1:-1)}:f)];
+  const wrong=uniqueBy(shuffle(cands).filter(c=>!peq(prodPoly(c),P)&&!fsame(c,fs)),c=>productStr(c),2);
+  return [{h:M(productStr(fs)),ok:true}].concat(wrong.map(c=>({h:M(productStr(c)),ok:false,
+    why:`Multiply it back out: ${M(productStr(c)+" = "+pstr(prodPoly(c)))}, not ${M(pstr(P))}.`})));
+}
+const S1={
+  name:"Factor & Cancel",sec:"Simplifying",rounds:5,
+  gen(r){
+    for(;;){
+      const bs=shuffle([-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8]),L=i=>({a:1,b:bs[i]}),k=rnd(2,6);
+      let num,den;
+      if(r===0){num=[{a:0,b:k},L(0)];den=[L(1),L(0)];}
+      else if(r===1){num=[{a:0,b:k},X,L(0)];den=[X,L(0)];}
+      else if(r===2){num=[L(0),L(1)];den=[L(0),L(2)];}
+      else if(r===3){num=[{a:0,b:2},L(0),L(1)];den=[L(0),L(1),L(2)];}
+      else{const c={a:1,b:-rnd(2,8)};if(bs[1]===c.b)continue;num=[{a:0,b:k},{a:-1,b:-c.b}];den=[c,L(1)];}
+      const all=prodPoly(num).concat(prodPoly(den)).map(Math.abs);
+      if(Math.max(...all)>(r===3?80:60))continue;
+      return {num,den};
+    }
+  },
+  round(r){
+    const {num,den}=this.gen(r),np=prodPoly(num),dp=prodPoly(den);
+    const orig=fracH(pstr(np),pstr(dp));
+    ctx.prompt(`<p>Simplify ${M(orig)} and list the values of ${M("<i>x</i>")} that are not allowed.</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div id="bh"></div><ol class="steps" id="steps"></ol>`;
+    const board=makeBoard($("#bh"),{fracs:[{n:num,d:den}],factored:false,tapFactor:false});
+    const s1=addStep("Step 1 · Factor the numerator",`<p>Which is the factored form of ${M(pstr(np))}?</p><div class="opts"></div>`);
+    choose($(".opts",s1),factorOptions(num),()=>{
+      board.reveal(0,"n");ctx.say("");
+      const s2=addStep("Step 2 · Factor the denominator",`<p>Which is the factored form of ${M(pstr(dp))}?</p><div class="opts"></div>`);
+      choose($(".opts",s2),factorOptions(den),()=>{
+        board.reveal(0,"d");ctx.say("");
+        const s3=addStep("Step 3 · Cancel common factors",`<p>Tap a factor on top, then the same factor on the bottom. Press <b>Done</b> when nothing else cancels.${num.concat(den).some(f=>!isNum(f)&&f.a<0)?` A factor like ${M("(5 "+MINUS+" <i>x</i>)")} is not the same as ${M("(<i>x</i> "+MINUS+" 5)")}: tap it and factor out ${M(MINUS+"1")} first.`:""}</p><div class="actions"><button type="button" class="btn primary">Done cancelling</button></div>`);
+        $("button",s3).onclick=()=>{
+          const p=board.pending();if(p)return ctx.miss(p);
+          board.lock();$("button",s3).disabled=true;
+          const zs=[...new Set(den.filter(f=>!isNum(f)).map(zero))];
+          const decoys=shuffle([...new Set(num.filter(f=>!isNum(f)).map(zero).concat(zs.map(v=>-v||0)))].filter(v=>!zs.includes(v))).slice(0,3);
+          const vals=shuffle(zs.concat(decoys));
+          ctx.say(`Simplified: ${M(board.result())}`);
+          const s4=addStep("Step 4 · Restrictions",`<p>Which values of ${M("<i>x</i>")} make the <b>original</b> denominator ${M(pstr(dp))} equal zero? Tap all that apply.</p>
+            <div class="chips">${vals.map(v=>`<button type="button" class="chip" aria-pressed="false" data-v="${v}">${M("<i>x</i> = "+signed(v))}</button>`).join("")}</div>
+            <div class="actions"><button type="button" class="btn primary" id="rcheck">Check</button></div>`);
+          $(".chips",s4).addEventListener("click",e=>{const c=e.target.closest(".chip");if(c&&!c.disabled)c.setAttribute("aria-pressed",c.getAttribute("aria-pressed")==="true"?"false":"true");});
+          $("#rcheck").onclick=()=>{
+            const on=[...s4.querySelectorAll(".chip")].filter(c=>c.getAttribute("aria-pressed")==="true").map(c=>+c.dataset.v);
+            const missing=zs.filter(v=>!on.includes(v)),extra=on.filter(v=>!zs.includes(v));
+            if(missing.length)return ctx.miss(`Missing ${M("<i>x</i> = "+signed(missing[0]))}: it makes ${M(fmtTile(den.find(f=>!isNum(f)&&zero(f)===missing[0])))} zero. Restrictions come from the original denominator, including factors you cancelled.`);
+            if(extra.length)return ctx.miss(`${M("<i>x</i> = "+signed(extra[0]))} doesn't make the denominator zero. Only denominator factors give restrictions.`);
+            s4.querySelectorAll("button").forEach(b=>{b.disabled=true;});s4.className="ok";
+            ctx.win(`${M(orig+" = "+board.result())}, where ${M(zs.sort((a,b)=>a-b).map(v=>"<i>x</i> ≠ "+signed(v)).join(", "))}`);
+          };
+        };
+      });
+    });
+  }
+};
+
+/* ---------- Station 2: multiply & divide (Ex 4–6) ---------- */
+function split(list){const n=list.length,k=n===2?1:n===3?pick([1,2]):2;return [list.slice(0,k),list.slice(k)];}
+const S2={
+  name:"Flip & Multiply",sec:"Multiplying and dividing",rounds:5,
+  gen(r){
+    for(;;){
+      const bs=shuffle([-9,-8,-7,-6,-5,-4,-3,-2,-1,1,2,3,4,5,6,7,8,9]),L=i=>({a:1,b:bs[i]});
+      const op=r>=2?"÷":"·";
+      if(r===4){
+        const c={a:1,b:-rnd(2,7)},k=rnd(2,5),f2=L(0),f3=L(1);
+        if(f2.b===c.b||f3.b===c.b)continue;
+        return {op,fracs:[{n:[{a:0,b:k},{a:-1,b:-c.b}],d:[f2]},{n:[c,f3],d:[]}]};
+      }
+      const shared=r===3?[X,{a:2,b:pick([1,-1,3,-3])}]:[L(0),L(1)];
+      const N=shuffle(shared.concat([L(2)],Math.random()<.5?[L(3)]:[]));
+      const D=shuffle(shared.concat([L(4)],Math.random()<.5?[L(5)]:[]));
+      const [a1,a2]=split(N),[b1,b2]=split(D);
+      const fracs=op==="·"?[{n:a1,d:b1},{n:a2,d:b2}]:[{n:a1,d:b1},{n:b2,d:a2}];
+      const big=fracs.some(f=>prodPoly(f.n).concat(prodPoly(f.d)).some(c=>Math.abs(c)>99));
+      if(big)continue;
+      if(fracs.some(f=>fsame(f.n,f.d)))continue;
+      return {op,fracs};
+    }
+  },
+  round(r){
+    const {op,fracs}=this.gen(r);
+    const show=f=>{const d=pstr(prodPoly(f.d)),n=pstr(prodPoly(f.n));return d==="1"?(nTerms(prodPoly(f.n))>1?`(${n})`:n):fracH(n,d);};
+    const orig=show(fracs[0])+` ${op} `+show(fracs[1]);
+    ctx.prompt(`<p>${op==="÷"?"Divide":"Multiply"} and simplify: ${M(orig)}</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div id="bh"></div><p class="howto">${op==="÷"?"<b>Flip</b> the second fraction (multiply by its reciprocal). ":""}Tap each polynomial to factor it. Then tap a factor on top and its match on the bottom to cancel. Matches can come from either fraction.${fracs.some(f=>f.n.concat(f.d).some(g=>!isNum(g)&&g.a<0))?` Watch for a factor like ${M("(5 "+MINUS+" <i>x</i>)")}: tap it and factor out ${M(MINUS+"1")} before cancelling.`:""}</p>
+      <div class="actions"><button type="button" class="btn primary" id="done">Done cancelling</button></div>`;
+    const board=makeBoard($("#bh"),{fracs,op,factored:false,tapFactor:true});
+    $("#done").onclick=()=>{
+      const p=board.pending();if(p)return ctx.miss(p);
+      board.lock();$("#done").disabled=true;
+      ctx.win(`${M(orig+" = "+board.result())}`);
+    };
+  }
+};
+
+/* ---------- Station 3: add & subtract (LCD, Ex 7–8) ---------- */
+const S3={
+  name:"Common Ground",sec:"Adding and subtracting",rounds:5,
+  gen(r){
+    for(;;){
+      let d1,d2,n1,n2,op;
+      const L={a:1,b:nz(6)},Mf={a:1,b:nz(6)};
+      if(r===0){
+        const [m,n]=pick([[12,15],[8,12],[6,10],[10,15],[9,12],[6,8],[14,21],[18,24],[4,6],[12,18]]);
+        const a=rnd(1,m-1),b=rnd(1,n-1);if(gcd(a,m)>1||gcd(b,n)>1)continue;
+        d1=[{a:0,b:m}];d2=[{a:0,b:n}];n1=[a];n2=[b];op=pick(["+","−"]);
+      }else if(r===1){d1=[L,L];d2=[L];n1=[rnd(2,9)];n2=[rnd(2,9)];op="+";}
+      else if(r===2){d1=[L];d2=[{a:0,b:pick([2,3])},L];n1=[nz(6),rnd(2,5)];n2=[nz(6),1];op="−";}
+      else if(r===3){if(Mf.b===L.b)continue;d1=[L,Mf];d2=[Mf];n1=[rnd(2,9)];n2=[rnd(2,9)];op=pick(["+","−"]);}
+      else{if(Mf.b===L.b)continue;d1=[L];d2=[Mf];n1=[nz(6),1];n2=[rnd(2,9)];op="−";}
+      const sg=op==="+"?1:-1,LCD=lcdOf(d1,d2),m1=quotF(LCD,d1),m2=quotF(LCD,d2);
+      const n1p=pmul(n1,prodPoly(m1)),n2p=pmul(n2,prodPoly(m2)),comb=padd(n1p,n2p,sg);
+      if(trim(comb).every(c=>c===0))continue;
+      const lp=fparts(LCD);
+      if(gcd(gcdAll(comb),lp.num)>1)continue;
+      if([...lp.cnt.values()].some(({f})=>peval(comb,zero(f))===0))continue;
+      if(r===0&&(comb[0]<=0))continue;
+      return {d1,d2,n1,n2,op,sg,LCD,m1,m2,n1p,n2p,comb};
+    }
+  },
+  round(r){
+    const {d1,d2,n1,n2,op,sg,LCD,m1,m2,n1p,n2p,comb}=this.gen(r);
+    const L=productStr(LCD),numeric=r===0;
+    const f1=fracH(pstr(n1),pstr(prodPoly(d1))),f2=fracH(pstr(n2),pstr(prodPoly(d2)));
+    const orig=`${f1} ${op==="+"?"+":MINUS} ${f2}`;
+    ctx.prompt(`<p>${op==="+"?"Add":"Subtract"} and simplify: ${M(orig)}</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<ol class="steps" id="steps"></ol>`;
+    // Step 1: LCD
+    const prodBoth=norm(d1.concat(d2));
+    const lp=fparts(LCD);
+    const cands=[prodBoth,norm(LCD.concat([{a:0,b:2}]))];
+    lp.cnt.forEach(({f})=>{cands.push(quotF(LCD,[f]));});
+    if(lp.num!==1)cands.push(quotF(LCD,[{a:0,b:lp.num}]));
+    const wrongL=uniqueBy(shuffle(cands).filter(c=>!fsame(c,LCD)&&c.length),c=>productStr(c),2);
+    const lcdItems=[{h:M(L),ok:true}].concat(wrongL.map(c=>{
+      const common=dividesF(d1,c)&&dividesF(d2,c);
+      return {h:M(productStr(c)),ok:false,why:common
+        ?`${M(productStr(c))} is a common denominator, but not the lowest. Use the highest power of each factor, and no more.`
+        :`${M(productStr(c))} isn't a multiple of ${M(productStr(dividesF(d1,c)?d2:d1))}, so that fraction can't be rewritten over it.`};
+    }));
+    const s1=addStep("Step 1 · Find the LCD",`<p>${numeric?`Denominators: ${M(productStr(d1))} and ${M(productStr(d2))}.`:`Factor the denominators: ${M(pstr(prodPoly(d1))+" = "+productStr(d1))} and ${M(pstr(prodPoly(d2))+" = "+productStr(d2))}.`} Which is the LCD?</p><div class="opts"></div>`);
+    const formStep=(i,next)=>{
+      const d=i===1?d1:d2,m=i===1?m1:m2,n=i===1?n1:n2,np=i===1?n1p:n2p,other=i===1?d2:d1,mo=i===1?m2:m1;
+      const show=x=>x.length?`· ${fracH(productStr(x),productStr(x))}`:"nothing";
+      const items=[{h:m.length?M(show(m)):"Nothing: it already has the LCD",ok:true,c:m}];
+      uniqueBy(shuffle([norm(other),LCD,mo,[]]).filter(c=>!fsame(c,m)),c=>productStr(c)||"none",2).forEach(c=>{
+        items.push({h:c.length?M(show(c)):"Nothing: it already has the LCD",ok:false,
+          why:`That leaves the denominator as ${M(productStr(norm(d.concat(c))))}, not the LCD ${M(L)}.`});
+      });
+      const s=addStep(`Step ${i+1} · Rewrite fraction ${i} over the LCD`,`<p>Multiply ${M(fracH(pstr(n),productStr(d)))} by which form of 1?</p><div class="opts"></div><div class="work"></div>`);
+      choose($(".opts",s),items,()=>{
+        $(".work",s).innerHTML=m.length?M(`${fracH(pstr(n),productStr(d))} · ${fracH(productStr(m),productStr(m))} = ${fracH(pstr(np),L)}`):`${M(fracH(pstr(n),L))} is already over the LCD.`;
+        ctx.say("");next();
+      });
+    };
+    choose($(".opts",s1),lcdItems,()=>{
+      ctx.say("");
+      formStep(1,()=>formStep(2,()=>{
+        const n2show=sg<0&&nTerms(n2p)>1?`(${pstr(n2p)})`:pstr(n2p);
+        const q=trim(n2p),hi=q.length-1,wd=padd(n1p,q.map((c,i)=>i===hi?-c:c),1);
+        const cands=[
+          {p:wd,why:`Subtract <b>every</b> term of the second numerator: ${M(MINUS+"("+pstr(n2p)+")")} changes every sign.`},
+          {p:padd(n1,n2,sg),why:"Use the rewritten numerators, the ones you got after multiplying by the form of 1."},
+          {p:padd(n1p,n2p,-sg),why:`Check the operation: this is ${op==="+"?"addition":"subtraction"}.`}
+        ];
+        const wrong=uniqueBy(cands.filter(c=>sg<0||c.p!==wd).filter(c=>!peq(c.p,comb)),c=>pstr(c.p),2);
+        const items=[{h:M(fracH(pstr(comb),L)),ok:true}].concat(wrong.map(c=>({h:M(fracH(pstr(c.p),L)),ok:false,why:c.why})));
+        const s4=addStep("Step 4 · Combine the numerators",`<p>${M(`${fracH(pstr(n1p),L)} ${op==="+"?"+":MINUS} ${fracH(n2show,L)}`)} = ?</p><div class="opts"></div>`);
+        choose($(".opts",s4),items,()=>{
+          ctx.win(`${M(orig+" = "+fracH(pstr(comb),L))}`);
+        });
+      }));
+    });
+  }
+};
+
+/* ---------- Station 4: complex fractions (Ex 9) ---------- */
+function cterms(ts){
+  return ts.filter(t=>t.c!==0).map((t,i)=>{
+    const first=i===0,sign=first?(t.c<0?MINUS:""):(t.c<0?` ${MINUS} `:" + "),a=Math.abs(t.c);
+    if(t.p<=0)return sign+(a===1&&t.p<0?"":a)+varPart(-t.p);
+    return sign+fracH(String(a),varPart(t.p));
+  }).join("");
+}
+function clearBy(ts,Lp,skipWhole){
+  const out=[0,0,0,0,0];
+  ts.forEach(t=>{const idx=(skipWhole&&t.p<=0)?-t.p:Lp-t.p;out[idx]+=t.c;});
+  return trim(out);
+}
+const S4={
+  name:"Clear the Clutter",sec:"Complex fractions",rounds:5,
+  gen(r){
+    for(;;){
+      const v=[0,1,2,0,3][r];
+      const s=pick([1,-1]),rr=s*rnd(2,8),k=rnd(2,5);
+      const P=x=>({a:1,b:x});
+      if(v===0)return {top:[{c:k,p:0},{c:k*rr,p:1}],bot:[{c:1,p:0},{c:-rr*rr,p:2}],tf:[{a:0,b:k},X,P(rr)],bf:[P(rr),P(-rr)]};
+      if(v===1)return {top:[{c:1,p:0},{c:-rr*rr,p:2}],bot:[{c:1,p:0},{c:rr,p:1}],tf:[P(rr),P(-rr)],bf:[X,P(rr)]};
+      if(v===2){
+        const p=nz(6),q=nz(6);if(p===q||p===-q)continue;
+        return {top:[{c:1,p:0},{c:p+q,p:1},{c:p*q,p:2}],bot:[{c:1,p:0},{c:-q*q,p:2}],tf:[P(p),P(q)],bf:[P(q),P(-q)]};
+      }
+      return {top:[{c:1,p:-1},{c:-rr*rr,p:1}],bot:[{c:1,p:0},{c:rr,p:1}],tf:[P(rr),P(-rr)],bf:[P(rr)]};
+    }
+  },
+  round(r){
+    const {top,bot,tf,bf}=this.gen(r);
+    const Lp=Math.max(...top.concat(bot).map(t=>t.p));
+    const xp=n=>n===0?"1":varPart(n);
+    const orig=fracH(cterms(top),cterms(bot));
+    ctx.prompt(`<p>Simplify the complex fraction ${M(orig)}</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<ol class="steps" id="steps"></ol><div id="bh"></div>`;
+    const dens=[...new Set(top.concat(bot).filter(t=>t.p>0).map(t=>t.p))].sort();
+    const powers=uniqueBy(shuffle([Lp+1,Lp-1,Lp+2].filter(p=>p>=1&&p!==Lp)),p=>p,2);
+    const items=[{h:M(xp(Lp)),ok:true}].concat(powers.map(p=>({h:M(xp(p)),ok:false,
+      why:p>Lp?`${M(xp(p))} clears every small denominator, but it isn't the lowest. The biggest small denominator is ${M(xp(Lp))}.`
+              :`${M(xp(p))} won't clear the ${M(xp(Lp))} denominator.`})));
+    const s1=addStep("Step 1 · Find the LCD of the small fractions",`<p>The small denominators are ${dens.map(p=>M(xp(p))).join(" and ")}${top.concat(bot).some(t=>t.p<=0)?` (whole terms have denominator ${M("1")})`:""}. What is their LCD?</p><div class="opts"></div>`);
+    choose($(".opts",s1),items,()=>{
+      ctx.say("");
+      const T=clearBy(top,Lp,false),B=clearBy(bot,Lp,false);
+      const wT=clearBy(top,Lp,true),wB=clearBy(bot,Lp,true);
+      const sB=B.slice();const lo=sB.findIndex(c=>c!==0);sB[lo]=-sB[lo];
+      const cands=[
+        {t:wT,b:wB,why:`Multiply <b>every</b> term by ${M(xp(Lp))}, including the whole-number terms.`},
+        {t:T,b:sB,why:`Check the signs. Multiplying by ${M(xp(Lp))} doesn't change any term's sign.`}
+      ].filter(c=>!(peq(c.t,T)&&peq(c.b,B)));
+      const opts=[{h:M(fracH(pstr(T),pstr(B))),ok:true}].concat(uniqueBy(cands,c=>pstr(c.t)+"/"+pstr(c.b),2).map(c=>({h:M(fracH(pstr(c.t),pstr(c.b))),ok:false,why:c.why})));
+      const s2=addStep("Step 2 · Multiply top and bottom by the LCD",`<p>${M(`${fracH(xp(Lp)+"("+cterms(top)+")",xp(Lp)+"("+cterms(bot)+")")}`)} = ?</p><div class="opts"></div>`);
+      choose($(".opts",s2),opts,()=>{
+        ctx.say("");
+        addStep("Step 3 · Factor and cancel",`<p>Tap the top and the bottom to factor them, then cancel matching factors. Press <b>Done</b> when nothing else cancels.</p><div class="actions"><button type="button" class="btn primary" id="done">Done cancelling</button></div>`);
+        const board=makeBoard($("#bh"),{fracs:[{n:tf,d:bf}],factored:false,tapFactor:true});
+        $("#done").onclick=()=>{
+          const p=board.pending();if(p)return ctx.miss(p);
+          board.lock();$("#done").disabled=true;
+          ctx.win(`${M(orig+" = "+fracH(pstr(T),pstr(B))+" = "+board.result())}`);
+        };
+      });
+    });
+  }
+};
+
+/* ---------- Station 5: legal or illegal (speed) ---------- */
+function genClaim(){
+  const a=rnd(1,9);let b=rnd(1,9);while(b===a)b=rnd(1,9);
+  const k=rnd(2,6),xa=poly([{c:1,x:1},{c:a}]),xma=poly([{c:1,x:1},{c:-a}]),xb=poly([{c:1,x:1},{c:b}]);
+  const amx=`${a} ${MINUS} <i>x</i>`;
+  const sq=`<i>x</i>${sup(2)}`;
+  const tri=poly([{c:1,x:2},{c:a+b,x:1},{c:a*b}]);
+  const kx=poly([{c:k,x:1},{c:k*a}]);
+  const legal=[
+    {l:fracH(poly([{c:1,x:2},{c:-a*a}]),xma),r:xa,why:`${M(sq+" "+MINUS+" "+a*a+" = ("+xa+")("+xma+")")}, and the ${M("("+xma+")")} factors cancel.`},
+    {l:fracH(amx,xma),r:MINUS+"1",why:`Factor out ${M(MINUS+"1")} first: ${M(amx+" = "+MINUS+"1("+xma+")")}. Then ${M("("+xma+")")} cancels, leaving ${M(MINUS+"1")}.`},
+    {l:fracH(kx,String(k)),r:xa,why:`${M(kx+" = "+k+"("+xa+")")}, so the ${k} cancels.`},
+    {l:fracH(poly([{c:1,x:2},{c:a,x:1}]),"<i>x</i>"),r:xa,why:`${M(poly([{c:1,x:2},{c:a,x:1}])+" = <i>x</i>("+xa+")")}, and the ${M("<i>x</i>")} cancels.`},
+    {l:fracH(xa,"("+xa+")"+sup(2)),r:fracH("1",xa),why:`One factor of ${M("("+xa+")")} cancels from top and bottom.`},
+    {l:fracH(tri,xa),r:xb,why:`${M(tri+" = ("+xa+")("+xb+")")}, and ${M("("+xa+")")} cancels.`}
+  ];
+  const illegal=[
+    {l:fracH(xa,"<i>x</i>"),r:String(a),why:`${M("<i>x</i>")} is a term of ${M(xa)}, not a factor. This fraction doesn't simplify.`},
+    {l:fracH(kx,String(k)),r:poly([{c:1,x:1},{c:k*a}]),why:`${k} must divide <b>every</b> term: the answer is ${M(xa)}.`},
+    {l:fracH(poly([{c:1,x:2},{c:a*a}]),xa),r:xa,why:`${M(poly([{c:1,x:2},{c:a*a}]))} is a sum of squares. It doesn't factor, so nothing cancels.`},
+    {l:fracH(amx,xma),r:"1",why:`${M(amx)} and ${M(xma)} aren't the same factor. Factor out ${M(MINUS+"1")}: ${M(amx+" = "+MINUS+"1("+xma+")")}, so the answer is ${M(MINUS+"1")}, not 1.`},
+    {l:fracH(xa,xb),r:fracH(String(a),String(b)),why:`Cancelling the ${M("<i>x</i>")}'s cancels terms, not factors. This fraction doesn't simplify.`},
+    {l:fracH(poly([{c:1,x:2},{c:-a*a}]),xma),r:xma,why:`${M("("+xa+")("+xma+")")} over ${M("("+xma+")")} leaves ${M(xa)}.`},
+    {l:fracH(tri,xa),r:xa,why:`${M(tri+" = ("+xa+")("+xb+")")}, so ${M(xb)} is left, not ${M(xa)}.`}
+  ];
+  const isLegal=Math.random()<.5;
+  return {...pick(isLegal?legal:illegal),legal:isLegal};
+}
+const S5={
+  name:"Legal or Illegal?",sec:"Cancelling traps",rounds:1,
+  round(){
+    ctx.prompt(`<p>60 seconds. Each card shows someone's simplification. Decide whether the cancelling is <b>legal</b> (the two sides are equal) or <b>illegal</b>. Keys 1 and 2 work too. Scores of 4, 8 and 12 earn one, two and three stars.</p>`);
+    const play=ctx.play();
+    play.innerHTML=`<div class="speed"><div class="timer"><div class="bar" id="bar"></div></div>
+      <div class="speed-top"><span id="clock">60.0 s</span><span id="score">Score 0</span></div>
+      <div class="claim m" id="claim">${fracH("<i>x</i> + 5","<i>x</i>")} = 5</div>
+      <div class="choices" id="choices">
+        <button type="button" class="choice" data-k="1" disabled><kbd>1</kbd> Legal</button>
+        <button type="button" class="choice" data-k="0" disabled><kbd>2</kbd> Illegal</button>
+      </div></div>`;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="start">Start the clock</button>`;
+    ctx.say(`Sample: ${M(fracH("<i>x</i> + 5","<i>x</i>")+" = 5")} is <b>illegal</b>. The ${M("<i>x</i>")} is a term of the top, not a factor.`);
+    let score=0,seen=0,cur=null,last="",locked=true,t0=0,tick=null,wait=null,running=false;
+    const btns=[...play.querySelectorAll(".choice")];
+    function next(){let c;do{c=genClaim();}while(c.l+c.r===last);last=c.l+c.r;cur=c;$("#claim").innerHTML=`${c.l} = ${c.r}`;locked=false;btns.forEach(b=>{b.disabled=false;});}
+    function end(){
+      running=false;clearInterval(tick);clearTimeout(wait);
+      const st=score>=12?3:score>=8?2:score>=4?1:0;
+      finish(st,`You judged ${score} of ${seen} correctly in 60 seconds.${st<3?" Reach 12 for three stars.":""}`);
+    }
+    function answer(k){
+      if(locked||!running)return;
+      locked=true;btns.forEach(b=>{b.disabled=true;});seen++;
+      const ok=(k==="1")===cur.legal;
+      const verdict=cur.legal?"Legal.":"Illegal.";
+      if(ok){score++;$("#score").textContent=`Score ${score}`;ctx.say(`✓ ${verdict} ${cur.why}`,"good");}
+      else ctx.say(`✗ ${verdict} ${cur.why}`,"bad");
+      wait=setTimeout(next,ok?1000:2400);
+    }
+    $("#start").onclick=()=>{
+      $("#actions").innerHTML="";ctx.say("");running=true;t0=performance.now();
+      tick=setInterval(()=>{
+        const left=Math.max(0,60-(performance.now()-t0)/1000);
+        $("#clock").textContent=left.toFixed(1)+" s";$("#bar").style.transform=`scaleX(${left/60})`;
+        if(left<=0)end();
+      },100);
+      next();
+    };
+    $("#choices").addEventListener("click",e=>{const b=e.target.closest(".choice");if(b)answer(b.dataset.k);});
+    S.key=e=>{const k={"1":"1","2":"0"}[e.key];if(k)answer(k);};
+    S.cleanup=()=>{running=false;clearInterval(tick);clearTimeout(wait);};
+  }
+};
+
+const STATIONS=[S1,S2,S3,S4,S5];
+$("#rail").addEventListener("click",e=>{const b=e.target.closest(".st-btn");if(b)loadStation(+b.dataset.i);});
+document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(S.key)S.key(e);});
+let armed=false;
+$("#reset").onclick=e=>{
+  if(!armed){armed=true;e.target.textContent="Tap again to erase all stars";setTimeout(()=>{armed=false;e.target.textContent="Reset stars";},4000);return;}
+  best={};store.set(best);armed=false;e.target.textContent="Stars reset";renderNav();
+};
+renderNav();startRound();
+})();
+</script>
+</body>
+</html>
