@@ -1,0 +1,663 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>i Spy</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: same graph-paper workbench as the series. Complex numbers live on the complex plane
+   (real across, imaginary up), and powers of i are quarter turns on a dial.
+   blue = z1 / your marks, amber = z2 and real parts, green = imaginary parts and correct, rose = i² and slips. */
+:root{
+  --paper:#eef3f6; --grid:#dbe4eb; --card:#ffffff; --ink:#17222d; --muted:#556472; --line:#c7d3dd;
+  --sq:#2c5cc9; --sq-soft:#dce6fb; --lin:#1b845a; --lin-soft:#d5efe2;
+  --unit:#b9770a; --unit-soft:#fcecc9; --neg:#c3364d; --neg-soft:#f8dce1;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Cambria","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+    --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+    --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+  --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+  --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background-color:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:18px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3.2rem);letter-spacing:-.025em;line-height:1;margin:0}
+h1 .dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--neg);margin:0 .08em .06em;vertical-align:baseline}
+h1 .tw{color:var(--sq)}
+.sub{margin:10px 0 0;color:var(--muted);max-width:62ch}
+.total{display:flex;align-items:baseline;gap:6px;font-family:var(--f-display);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:6px 14px}
+.tot-n{font-size:1.8rem;font-weight:800;color:var(--unit);font-variant-numeric:tabular-nums}
+.tot-of{color:var(--muted);font-size:.9rem}
+.rail-wrap{overflow-x:auto;padding:4px;margin:-4px}
+.rail{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.st-btn{width:100%;height:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer;display:grid;gap:1px;align-content:start}
+.st-btn:hover{border-color:var(--sq)}
+.st-btn[aria-current="true"]{border-color:var(--sq);box-shadow:0 0 0 3px var(--sq-soft)}
+.st-num{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.st-name{font-family:var(--f-display);font-weight:600;font-size:1.02rem;line-height:1.2}
+.st-topic{font-size:.82rem;color:var(--muted)}
+.st-stars{color:var(--unit);letter-spacing:2px;font-size:.95rem;margin-top:4px}
+.stage{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:clamp(16px,3.2vw,30px);display:grid;gap:16px;min-width:0}
+.stage-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px}
+.eyebrow{margin:0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);margin:2px 0 0;letter-spacing:-.015em;text-wrap:balance}
+.dots{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.dots li{min-width:34px;height:30px;padding:0 6px;border-radius:15px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots li.now{border-color:var(--sq);color:var(--sq);font-weight:700}
+.dots li.done{background:var(--unit-soft);border-color:var(--unit);color:var(--unit);letter-spacing:-1px}
+.prompt{font-size:1.08rem;max-width:72ch}
+.prompt p{margin:0}
+.m{font-family:var(--f-math);font-size:1.18em;white-space:nowrap}
+.m i{font-style:italic}
+.m .m{font-size:1em}
+sup{font-size:.68em;line-height:0}
+.frac{display:inline-grid;vertical-align:middle;text-align:center;margin:0 .12em;line-height:1.3}
+.frac>.fn{padding:0 .25em .06em}
+.frac>.fd{border-top:1.5px solid currentColor;padding:.06em .25em 0}
+.rad{border-top:1.5px solid currentColor;padding:0 .1em}
+.lbl{margin:0 0 6px;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.play{display:grid;gap:16px;min-width:0}
+.fb{min-height:1.6em;font-size:1.02rem;padding:10px 14px;border-radius:10px;border:1.5px dashed var(--line);color:var(--muted);overflow-x:auto}
+.fb:empty{border-color:transparent;padding-block:0;min-height:0}
+.fb.good{border:1.5px solid var(--lin);background:var(--lin-soft);color:var(--ink)}
+.fb.bad{border:1.5px solid var(--neg);background:var(--neg-soft);color:var(--ink)}
+.fb-stars{color:var(--unit);letter-spacing:2px;margin-right:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.actions:empty{display:none}
+.btn{font:inherit;font-weight:700;border-radius:9px;padding:10px 18px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--card)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:3px solid var(--sq);outline-offset:2px}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}100%{transform:none}}
+@media (prefers-reduced-motion: reduce){.shake{animation:none!important}}
+.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.steps>li{border-left:3px solid var(--line);padding:2px 0 2px 14px;display:grid;gap:8px;min-width:0}
+.steps>li.on{border-left-color:var(--sq)}
+.steps>li.ok{border-left-color:var(--lin)}
+.steps p{margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;padding:8px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--sq)}
+.opt.miss{border-color:var(--neg);background:var(--neg-soft)}
+.opt.hit{border-color:var(--lin);background:var(--lin-soft)}
+.opt:disabled{cursor:default}
+.work{overflow-x:auto}
+
+/* coordinate grid */
+.gridwrap{display:flex;justify-content:center;min-width:0}
+svg.grid{width:100%;max-width:460px;height:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+svg.grid.picking{cursor:crosshair}
+svg.grid .gl{stroke:var(--line);stroke-width:1}
+svg.grid .ax{stroke:var(--ink);stroke-width:1.8}
+svg.grid .tk{font:11px var(--f-body);fill:var(--muted)}
+svg.grid .axl{font:italic 15px var(--f-math);fill:var(--ink)}
+svg.grid .pt{fill:var(--sq);stroke:var(--card);stroke-width:2}
+svg.grid .pt.good{fill:var(--lin)}
+svg.grid .pt.bad{fill:var(--neg)}
+svg.grid .pt.target{fill:var(--unit)}
+svg.grid .plab{font:700 13px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+svg.grid .plab.leg{fill:var(--unit)}
+svg.grid .tag rect{fill:var(--unit-soft);stroke:var(--unit);stroke-width:1.8}
+svg.grid .tag text{font:700 15px var(--f-body);fill:var(--ink);font-variant-numeric:tabular-nums}
+svg.grid .ln{stroke:var(--sq);stroke-width:2.6;fill:none}
+svg.grid .ln.good{stroke:var(--lin)}
+svg.grid .seg{stroke:var(--sq);stroke-width:2.6}
+svg.grid .leg{stroke:var(--unit);stroke-width:2.4;stroke-dasharray:6 4}
+svg.grid .guide{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:4 4}
+svg.grid .ra{fill:none;stroke:var(--unit);stroke-width:1.6}
+svg.grid .circ{fill:none;stroke:var(--lin);stroke-width:2.4}
+svg.grid .ghost circle{fill:none;stroke:var(--sq);stroke-width:2}
+svg.grid .ghost text{font:700 12px var(--f-body);fill:var(--sq);paint-order:stroke;stroke:var(--card);stroke-width:4px}
+
+table.tbl{border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.tbl th,table.tbl td{padding:6px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tbl th{font-weight:400;color:var(--muted)}
+table.tbl tr.now td{background:var(--sq-soft)}
+table.tbl tr.done td{color:var(--lin)}
+
+/* speed */
+.speed{display:grid;gap:14px;justify-items:center;text-align:center}
+.timer{width:100%;height:10px;border-radius:5px;background:var(--grid);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--sq);transform-origin:left;transition:transform .1s linear}
+.speed-top{width:100%;display:flex;justify-content:space-between;font-weight:700;font-variant-numeric:tabular-nums}
+.claim{font-size:clamp(1.8rem,7vw,2.8rem);margin:0}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.choice{font:inherit;font-weight:700;padding:14px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.choice:hover:not(:disabled){border-color:var(--sq)}
+.choice:disabled{opacity:.5;cursor:default}
+kbd{font-family:var(--f-body);font-size:.75rem;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+@media (max-width:480px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.summary{display:grid;gap:10px;justify-items:start}
+.bigstars{font-size:3rem;color:var(--unit);letter-spacing:6px;margin:0;line-height:1}
+.summary p{margin:0;max-width:60ch}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;color:var(--muted);font-size:.85rem}
+.linkbtn{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;max-width:340px}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:9px;background:var(--card)}
+.stepper button{font:inherit;font-size:1.15rem;width:38px;height:38px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:48px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.howto{margin:0;color:var(--muted)}
+
+h1 .tw{font-family:var(--f-math);font-style:italic;font-weight:600}
+svg.grid .pt.alt{fill:var(--unit)}
+svg.grid .seg2{stroke:var(--unit);stroke-width:2.6}
+svg.grid .seg.good{stroke:var(--lin)}
+.radwrap{display:flex;justify-content:center;overflow-x:auto;padding:10px 0}
+.radbox{display:flex;align-items:stretch;gap:4px;font-size:1.2rem}
+.outside{display:flex;align-items:center;min-width:1.5em;justify-content:flex-end;font-size:1.5rem;color:var(--lin);font-weight:600;padding-right:4px}
+.radsign{font-family:var(--f-math);font-size:3.4rem;line-height:1;align-self:center;color:var(--ink)}
+.under{display:flex;flex-wrap:wrap;align-items:center;gap:6px;border-top:3px solid var(--ink);padding:10px 8px 4px;min-height:60px;min-width:120px}
+.tile{font:inherit;font-family:var(--f-math);font-size:1.3rem;padding:6px 12px;border-radius:9px;border:1.5px solid var(--unit);background:var(--unit-soft);color:var(--ink);cursor:pointer}
+.tile.neg1{border-color:var(--lin);background:var(--lin-soft)}
+.tile.sel{border-color:var(--sq);background:var(--sq-soft);box-shadow:0 0 0 3px var(--sq-soft)}
+.tile.ghost{cursor:default;border-style:dashed;background:transparent;color:var(--muted);border-color:var(--line)}
+.tile:disabled{cursor:default}
+.tile .m{font-size:1em}
+.dotsep{color:var(--muted)}
+.cbox{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);gap:5px;max-width:420px;width:100%;margin:0 auto}
+.cbox .hdr{display:grid;place-items:center;padding:4px 8px;font-weight:700;color:var(--muted)}
+.cbox .cell{display:grid;place-items:center;min-height:62px;border-radius:8px;border:2px solid;padding:6px;font:inherit;color:var(--ink);text-align:center}
+.cell.re{background:var(--unit-soft);border-color:var(--unit)}
+.cell.im{background:var(--lin-soft);border-color:var(--lin)}
+.cell.i2{background:var(--neg-soft);border-color:var(--neg);cursor:pointer;box-shadow:0 0 0 0 var(--neg-soft);animation:pulse 1.6s infinite}
+.cell.i2.flipped{background:var(--unit-soft);border-color:var(--unit);animation:none;cursor:default}
+@keyframes pulse{50%{box-shadow:0 0 0 6px var(--neg-soft)}}
+@media (prefers-reduced-motion: reduce){.cell.i2{animation:none}}
+.dial{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,auto);gap:10px;width:100%;max-width:420px;align-items:center;justify-items:center}
+.dbtn{font:inherit;font-weight:700;padding:12px 10px;min-width:96px;border-radius:12px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.dbtn:hover:not(:disabled){border-color:var(--sq)}
+.dbtn:disabled{opacity:.5;cursor:default}
+.dbtn.top{grid-column:2;grid-row:1}.dbtn.left{grid-column:1;grid-row:2}.dbtn.right{grid-column:3;grid-row:2}.dbtn.bottom{grid-column:2;grid-row:3}
+.hub{grid-column:2;grid-row:2;width:110px;height:110px;border-radius:50%;border:3px solid var(--sq);display:grid;place-items:center;font-size:2rem;background:var(--sq-soft)}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1><span class="tw">i</span> Spy</h1>
+      <p class="sub">A complex numbers game for Math 115, Section 2.4. Pull pairs out of square roots, move around the complex plane, FOIL with i² = −1, divide using conjugates, and spin through powers of i. Five stations: a clean round earns three stars, and each slip costs one.</p>
+    </div>
+    <div class="total" id="total" aria-live="polite"></div>
+  </header>
+  <nav class="rail-wrap" aria-label="Stations"><ol class="rail" id="rail"></ol></nav>
+  <main class="stage" id="stage"></main>
+  <footer>
+    <span>Stars are saved in this browser only.</span>
+    <button class="linkbtn" id="reset" type="button">Reset stars</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const nz=n=>{let v=0;while(!v)v=rnd(-n,n);return v;};
+const MINUS="−";
+const sup=e=>`<sup>${e}</sup>`;
+const M=h=>`<span class="m">${h}</span>`;
+const fracH=(n,d)=>d==="1"?n:`<span class="frac"><span class="fn">${n}</span><span class="fd">${d}</span></span>`;
+const starStr=n=>"★".repeat(n)+"☆".repeat(3-n);
+const num=v=>(v<0?MINUS:"")+Math.abs(v);
+const pn=v=>v<0?`(${num(v)})`:num(v);
+const R=(n,d=1)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d)||1;return {n:n/g,d:d/g};};
+const rS=r=>r.d===1?num(r.n):(r.n<0?MINUS:"")+fracH(String(Math.abs(r.n)),String(r.d));
+const X="<i>x</i>",Y="<i>y</i>";
+function termV(c,v,first){const a=Math.abs(c),body=(a===1&&v)?v:(a+v);if(first)return (c<0?MINUS:"")+body;return (c<0?` ${MINUS} `:" + ")+body;}
+function coefX(m){if(m.n===0)return "";if(m.d===1)return termV(m.n,X,true);return (m.n<0?MINUS:"")+fracH(String(Math.abs(m.n)),String(m.d))+X;}
+function siRHS(m,b){const mx=coefX(m);if(b.n===0)return mx||"0";if(!mx)return rS(b);return mx+(b.n<0?` ${MINUS} `:" + ")+rS(R(Math.abs(b.n),b.d));}
+function eqStd(A,B,C){let s="",f=true;if(A){s+=termV(A,X,true);f=false;}if(B)s+=termV(B,Y,f);return s+" = "+num(C);}
+const coordTxt=(x,y)=>`(${num(x)}, ${num(y)})`;
+const radS=n=>{const s=Math.round(Math.sqrt(n));return s*s===n?String(s):`√<span class="rad">${n}</span> ≈ ${Math.sqrt(n).toFixed(2)}`;};
+
+/* ---------- coordinate grid ---------- */
+const SVGNS="http://www.w3.org/2000/svg";let gridSeq=0;
+function makeGrid(host,o){
+  const xmin=o.xmin,xmax=o.xmax,ymin=o.ymin,ymax=o.ymax,U=o.U||26,pad=22,snap=o.snap||1,tick=o.tick||2;
+  const W=(xmax-xmin)*U+2*pad,H=(ymax-ymin)*U+2*pad;
+  const X=x=>pad+(x-xmin)*U,Y=y=>pad+(ymax-y)*U;
+  const cid="clip"+(++gridSeq);
+  let h=`<div class="gridwrap"><svg class="grid" viewBox="0 0 ${W} ${H}" role="img" aria-label="Coordinate grid from ${xmin} to ${xmax}"><defs><clipPath id="${cid}"><rect x="${X(xmin)}" y="${Y(ymax)}" width="${(xmax-xmin)*U}" height="${(ymax-ymin)*U}"/></clipPath></defs><g>`;
+  for(let x=xmin;x<=xmax;x++)h+=`<line class="gl" x1="${X(x)}" y1="${Y(ymin)}" x2="${X(x)}" y2="${Y(ymax)}"/>`;
+  for(let y=ymin;y<=ymax;y++)h+=`<line class="gl" x1="${X(xmin)}" y1="${Y(y)}" x2="${X(xmax)}" y2="${Y(y)}"/>`;
+  h+=`<line class="ax" x1="${X(xmin)}" y1="${Y(0)}" x2="${X(xmax)}" y2="${Y(0)}"/><line class="ax" x1="${X(0)}" y1="${Y(ymin)}" x2="${X(0)}" y2="${Y(ymax)}"/>`;
+  for(let x=xmin;x<=xmax;x++)if(x&&x%tick===0)h+=`<text class="tk" x="${X(x)}" y="${Y(0)+14}" text-anchor="middle">${num(x)}</text>`;
+  for(let y=ymin;y<=ymax;y++)if(y&&y%tick===0)h+=`<text class="tk" x="${X(0)-5}" y="${Y(y)+4}" text-anchor="end">${num(y)}</text>`;
+  h+=`<text class="axl" x="${X(xmax)-4}" y="${Y(0)-7}" text-anchor="end">${o.xl||"x"}</text><text class="axl" x="${X(0)+7}" y="${Y(ymax)+14}">${o.yl||"y"}</text>`;
+  h+=`</g><g clip-path="url(#${cid})" class="L-shapes"></g><g class="L-pts"></g><g class="ghost"></g></svg></div>`;
+  host.innerHTML=h;
+  const svg=host.querySelector("svg"),shapes=svg.querySelector(".L-shapes"),pts=svg.querySelector(".L-pts"),ghost=svg.querySelector(".ghost");
+  let pickCb=null;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function at(e){
+    const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)*W/r.width,sy=(e.clientY-r.top)*H/r.height;
+    const x=clamp(Math.round((xmin+(sx-pad)/U)/snap)*snap,xmin,xmax),y=clamp(Math.round((ymax-(sy-pad)/U)/snap)*snap,ymin,ymax);
+    return {x:x||0,y:y||0};
+  }
+  svg.addEventListener("pointermove",e=>{
+    if(!pickCb){ghost.innerHTML="";return;}
+    const p=at(e),right=X(p.x)>W-90;
+    ghost.innerHTML=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="8"/><text x="${X(p.x)+(right?-11:11)}" y="${Y(p.y)-11}" text-anchor="${right?"end":"start"}">${coordTxt(p.x,p.y)}</text>`;
+  });
+  svg.addEventListener("pointerleave",()=>{ghost.innerHTML="";});
+  svg.addEventListener("click",e=>{if(!pickCb)return;const p=at(e);pickCb(p.x,p.y);});
+  const add=(layer,s)=>{const g=document.createElementNS(SVGNS,"g");g.innerHTML=s;layer.appendChild(g);return g;};
+  const api={
+    pick(cb){pickCb=cb;svg.classList.toggle("picking",!!cb);if(!cb)ghost.innerHTML="";},
+    point(x,y,cls="",label="",pos="ne"){
+      const w=pos.includes("w"),s=pos.includes("s");
+      let t=`<circle class="pt ${cls}" cx="${X(x)}" cy="${Y(y)}" r="6.5"/>`;
+      if(label)t+=`<text class="plab" x="${X(x)+(w?-10:10)}" y="${Y(y)+(s?19:-10)}" text-anchor="${w?"end":"start"}">${label}</text>`;
+      return add(pts,t);
+    },
+    text(x,y,str,cls="plab",anchor="middle",dy=0){return add(pts,`<text class="${cls}" x="${X(x)}" y="${Y(y)+dy}" text-anchor="${anchor}">${str}</text>`);},
+    line(x1,y1,x2,y2,cls=""){
+      let a,b,c,d;
+      if(x1===x2){a=c=x1;b=ymin-1;d=ymax+1;}else{const m=(y2-y1)/(x2-x1);a=xmin-1;c=xmax+1;b=y1+m*(a-x1);d=y1+m*(c-x1);}
+      return add(shapes,`<line class="ln ${cls}" x1="${X(a)}" y1="${Y(b)}" x2="${X(c)}" y2="${Y(d)}"/>`);
+    },
+    seg(x1,y1,x2,y2,cls="seg"){return add(shapes,`<line class="${cls}" x1="${X(x1)}" y1="${Y(y1)}" x2="${X(x2)}" y2="${Y(y2)}"/>`);},
+    circle(cx,cy,r){return add(shapes,`<circle class="circ" cx="${X(cx)}" cy="${Y(cy)}" r="${r*U}"/>`);},
+    tag(x,y,str,side){
+      const w=str.length*8.6+18,h=26,gap=10;
+      let cx=X(x),cy=Y(y);
+      if(side==="l")cx-=w/2+gap;else if(side==="r")cx+=w/2+gap;else if(side==="u")cy-=h/2+gap;else cy+=h/2+gap;
+      cx=Math.max(w/2+2,Math.min(W-w/2-2,cx));cy=Math.max(h/2+2,Math.min(H-h/2-2,cy));
+      return add(pts,`<g class="tag"><rect x="${cx-w/2}" y="${cy-h/2}" width="${w}" height="${h}" rx="7"/><text x="${cx}" y="${cy+5}" text-anchor="middle">${str}</text></g>`);
+    },
+    rightAngle(cx,cy,tx,ty){
+      const sx=Math.sign(tx-cx)*.45,sy=Math.sign(ty-cy)*.45;
+      return add(shapes,`<polyline class="ra" points="${X(cx+sx)},${Y(cy)} ${X(cx+sx)},${Y(cy+sy)} ${X(cx)},${Y(cy+sy)}"/>`);
+    }
+  };
+  api.curve=(f,cls="")=>{let d="";for(let x=xmin-.5;x<=xmax+.5;x+=.05){const y=Math.max(ymin-50,Math.min(ymax+50,f(x)));d+=(d?" L":"M")+X(x).toFixed(1)+" "+Y(y).toFixed(1);}return add(shapes,`<path class="ln ${cls}" d="${d}"/>`);};
+  return api;
+}
+
+/* ---------- UI helpers ---------- */
+function addStep(label,body){
+  const ol=$("#steps");ol.querySelectorAll("li.on").forEach(l=>{l.className="ok";});
+  const li=document.createElement("li");li.className="on";li.innerHTML=`<p class="lbl">${label}</p>${body}`;
+  ol.appendChild(li);return li;
+}
+function choose(host,items,onOK,mix=true){
+  const list=mix?shuffle(items.slice()):items.slice();
+  host.innerHTML=list.map((it,i)=>`<button type="button" class="opt" data-i="${i}">${it.h}</button>`).join("");
+  host.addEventListener("click",e=>{
+    const b=e.target.closest(".opt");if(!b||b.disabled)return;
+    const it=list[+b.dataset.i];
+    if(it.ok){b.classList.add("hit");host.querySelectorAll(".opt").forEach(x=>{x.disabled=true;});onOK();}
+    else{b.classList.add("miss");b.disabled=true;ctx.miss(it.why);}
+  });
+}
+const flash=g=>setTimeout(()=>g.remove(),900);
+
+/* ---------- shell ---------- */
+const store={
+  get(){try{return JSON.parse(localStorage.getItem("i-spy-stars")||"{}")||{};}catch(e){return {};}},
+  set(o){try{localStorage.setItem("i-spy-stars",JSON.stringify(o));}catch(e){}}
+};
+let best=store.get();
+const S={st:0,round:0,mistakes:0,roundStars:[],cleanup:null,key:null};
+function renderNav(){
+  $("#rail").innerHTML=STATIONS.map((st,i)=>`<li><button type="button" class="st-btn" data-i="${i}" aria-current="${i===S.st}"><span class="st-num">Station ${i+1}</span><span class="st-name">${st.name}</span><span class="st-topic">${st.sec}</span><span class="st-stars" aria-label="${best[i]||0} of 3 stars">${starStr(best[i]||0)}</span></button></li>`).join("");
+  const tot=STATIONS.reduce((s,_,i)=>s+(best[i]||0),0);
+  $("#total").innerHTML=`<span class="tot-n">${tot}</span><span class="tot-of">of ${STATIONS.length*3} stars</span>`;
+}
+function teardown(){if(S.cleanup){S.cleanup();S.cleanup=null;}S.key=null;}
+function loadStation(i){teardown();S.st=i;S.round=0;S.roundStars=[];renderNav();startRound();}
+function startRound(){
+  teardown();S.mistakes=0;
+  const st=STATIONS[S.st];
+  $("#stage").innerHTML=`<div class="stage-head"><div><p class="eyebrow">Station ${S.st+1} · ${st.sec}</p><h2>${st.name}</h2></div>${st.rounds>1?`<ol class="dots" id="dots" aria-label="Round progress"></ol>`:""}</div>
+  <div class="prompt" id="prompt"></div><div class="play" id="play"></div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="actions"></div>`;
+  renderDots();st.round(S.round);
+}
+function renderDots(){
+  const d=$("#dots");if(!d)return;let h="";
+  for(let i=0;i<STATIONS[S.st].rounds;i++){const s=S.roundStars[i];h+=`<li class="${s?"done":i===S.round?"now":""}" aria-label="Round ${i+1}${s?`: ${s} stars`:""}">${s?"★".repeat(s):i+1}</li>`;}
+  d.innerHTML=h;
+}
+const ctx={
+  prompt(h){$("#prompt").innerHTML=h;},
+  play(){return $("#play");},
+  say(h,k=""){const f=$("#fb");if(!f)return;f.className="fb"+(k?" "+k:"");f.innerHTML=h;},
+  miss(h){S.mistakes++;ctx.say(h,"bad");const p=$("#play");if(!p)return;p.classList.remove("shake");void p.offsetWidth;p.classList.add("shake");},
+  win(h){
+    const s=S.mistakes===0?3:S.mistakes===1?2:1;S.roundStars[S.round]=s;renderDots();
+    ctx.say(`<span class="fb-stars" aria-label="${s} stars">${starStr(s)}</span>${h}`,"good");
+    const last=S.round>=STATIONS[S.st].rounds-1;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="next">${last?"See results":"Next round"} →</button>`;
+    $("#next").onclick=()=>{
+      S.round++;
+      if(S.round>=STATIONS[S.st].rounds){const avg=S.roundStars.reduce((a,b)=>a+b,0)/S.roundStars.length;finish(Math.round(avg),`Round stars: ${S.roundStars.join(", ")}. A three-star round has no slips.`);}
+      else startRound();
+    };
+    $("#next").focus({preventScroll:true});
+  }
+};
+function finish(n,detail){
+  teardown();
+  const i=S.st;if(n>(best[i]||0)){best[i]=n;store.set(best);}
+  renderNav();
+  const nx=(i+1)%STATIONS.length;
+  $("#stage").innerHTML=`<div class="summary"><p class="eyebrow">Station ${i+1} complete</p><h2>${STATIONS[i].name}</h2>
+  <p class="bigstars" aria-label="${n} of 3 stars">${starStr(n)}</p><p>${detail}</p>
+  <div class="actions"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn primary" id="go">Station ${nx+1}: ${STATIONS[nx].name} →</button></div></div>`;
+  $("#again").onclick=()=>loadStation(i);
+  $("#go").onclick=()=>loadStation(nx);
+}
+
+/* ---------- complex-number helpers ---------- */
+const I="<i>i</i>";
+const radH=n=>`√<span class="rad">${n}</span>`;
+function iTerm(b){const ab=R(Math.abs(b.n),b.d);return (ab.d===1?(ab.n===1?"":String(ab.n)):fracH(String(ab.n),String(ab.d)))+I;}
+function cS(a,b){
+  a=typeof a==="number"?R(a):a;b=typeof b==="number"?R(b):b;
+  if(b.n===0)return rS(a);
+  if(a.n===0)return (b.n<0?MINUS:"")+iTerm(b);
+  return rS(a)+(b.n<0?` ${MINUS} `:" + ")+iTerm(b);
+}
+function ctxt(a,b){
+  const n=v=>(v<0?MINUS:"")+Math.abs(v);
+  if(!b)return n(a);
+  const bi=(Math.abs(b)===1?"":Math.abs(b))+"i";
+  if(!a)return (b<0?MINUS:"")+bi;
+  return `${n(a)} ${b<0?MINUS:"+"} ${bi}`;
+}
+function factorList(n){const out=[];let d=2;while(n>1){while(n%d===0){out.push(d);n/=d;}d++;}return out;}
+
+/* ---------- Station 1: radicals and √−n (Ex 1–2) ---------- */
+const S1={
+  name:"Pair Up",sec:"Radicals and i",rounds:5,
+  gen(r){
+    if(r===0)return {n:pick([36,27,50,32,12,18,20,45]),neg:false,lead:false};
+    if(r===1)return {n:pick([24,28,48,54,63,72,75,80,98,108]),neg:false,lead:false};
+    if(r===2)return {n:pick([81,16,25,49,64,100,36]),neg:true,lead:false};
+    if(r===3)return {n:pick([24,45,12,18,20,27,50,48,8,75]),neg:true,lead:false};
+    return {n:pick([16,9,25,48,72,12]),neg:true,lead:true};
+  },
+  round(r){
+    const {n,neg,lead}=this.gen(r);
+    const shown=`${lead?MINUS:""}${radH((neg?MINUS:"")+n)}`;
+    ctx.prompt(`<p>Simplify ${M(shown)}. Tap two <b>equal</b> prime factors to pull the pair out of the root as one factor.${neg?` Tap ${M(MINUS+"1")} to pull it out as ${M(I)}, since ${M(radH(MINUS+"1")+" = "+I)}.`:""} Press <b>Done</b> when nothing else can come out.</p>`);
+    let tiles=factorList(n).map((v,i)=>({id:i,v}));if(neg)tiles.push({id:99,v:-1});
+    const outs=[];let iOut=false,sel=null,done=false;
+    ctx.play().innerHTML=`<div class="radwrap"><div class="radbox"><span class="outside m" id="out"></span><span class="radsign">√</span><div class="under" id="under"></div></div></div>
+      <div class="actions"><button type="button" class="btn primary" id="done">Done</button></div>`;
+    const resultH=()=>{
+      const coef=outs.reduce((a,b)=>a*b,1),inside=tiles.filter(t=>t.v>0).reduce((a,t)=>a*t.v,1);
+      let s=lead?MINUS:"";
+      if(coef!==1||(inside===1&&!iOut))s+=coef;
+      if(inside>1)s+=radH(inside);
+      if(iOut)s+=(inside>1?" ":"")+I;
+      return s;
+    };
+    const render=()=>{
+      const parts=outs.map(String);if(iOut)parts.push(I);
+      $("#out").innerHTML=(lead?MINUS:"")+(parts.length?parts.join(" · "):"");
+      $("#under").innerHTML=tiles.length?tiles.map(t=>`<button type="button" class="tile${t.v<0?" neg1":""}${sel===t.id?" sel":""}" data-id="${t.id}" ${done?"disabled":""}>${M(t.v<0?MINUS+"1":String(t.v))}</button>`).join(`<span class="dotsep">·</span>`):`<span class="tile ghost">${M("1")}</span>`;
+    };
+    render();
+    $("#under").addEventListener("click",e=>{
+      const b=e.target.closest(".tile[data-id]");if(!b||done)return;
+      const t=tiles.find(x=>x.id===+b.dataset.id);
+      if(t.v<0){tiles=tiles.filter(x=>x!==t);iOut=true;sel=null;render();ctx.say(`${M(radH(MINUS+"1")+" = "+I)} comes out front.`);return;}
+      if(sel===null||sel===t.id){sel=sel===t.id?null:t.id;render();return;}
+      const s=tiles.find(x=>x.id===sel);sel=null;
+      if(s.v===t.v){tiles=tiles.filter(x=>x!==s&&x!==t);outs.push(t.v);render();ctx.say(`${M(radH(t.v+" · "+t.v)+" = "+t.v)} comes out front.`);}
+      else{render();ctx.miss(`Only a <b>pair</b> of equal factors comes out. ${M(s.v+" · "+t.v)} isn't a perfect square.`);}
+    });
+    $("#done").onclick=()=>{
+      if(done)return;
+      const cnt={};tiles.forEach(t=>{if(t.v>0)cnt[t.v]=(cnt[t.v]||0)+1;});
+      const pair=Object.keys(cnt).find(k=>cnt[k]>=2);
+      if(pair)return ctx.miss(`There's still a pair of ${M(pair)}'s under the root.`);
+      if(neg&&!iOut)return ctx.miss(`The ${M(MINUS+"1")} is still under the root. ${M(radH(MINUS+"1")+" = "+I)}, so pull it out.`);
+      done=true;render();$("#done").disabled=true;
+      ctx.win(`${M(shown+" = "+resultH())}${neg?` Write the ${M(I)} outside the radical so it's clearly not under it.`:""}`);
+    };
+  }
+};
+
+/* ---------- Station 2: add, subtract, scale on the complex plane (Ex 3–5) ---------- */
+const S2={
+  name:"Plane Moves",sec:"Adding and subtracting",rounds:5,
+  gen(r){
+    const op=["+","+","−","−","k"][r];
+    for(;;){
+      const a1=rnd(-5,5),b1=nz(5),a2=rnd(-5,5),b2=nz(5);
+      let k=null,ta,tb;
+      if(op==="+"){ta=a1+a2;tb=b1+b2;}
+      else if(op==="−"){ta=a1-a2;tb=b1-b2;}
+      else{k=pick([R(1,2),R(2),R(3),R(-1,2),R(-2)]);ta=a1*k.n/k.d;tb=b1*k.n/k.d;}
+      if(Math.abs(ta)>8||Math.abs(tb)>8)continue;
+      if(op!=="k"&&((ta===a1&&tb===b1)||(ta===a2&&tb===b2)))continue;
+      if(op!=="k"&&(a1===a2&&b1===b2))continue;
+      if(op==="k"&&!a1)continue;
+      return {op,a1,b1,a2,b2,k,ta,tb};
+    }
+  },
+  round(r){
+    const {op,a1,b1,a2,b2,k,ta,tb}=this.gen(r);
+    const z1=cS(a1,b1),z2=cS(a2,b2);
+    const expr=op==="k"?`${k.d===1?num(k.n):((k.n<0?MINUS:"")+fracH(String(Math.abs(k.n)),String(k.d)))}(${z1})`:`(${z1}) ${op==="+"?"+":MINUS} (${z2})`;
+    ctx.prompt(`<p>On the complex plane, ${M("<i>a</i> + <i>b</i>"+I)} sits at ${M("(<i>a</i>, <i>b</i>)")}: real part across, imaginary part up. Tap the point for ${M(expr)}.${op==="k"?" Half-grid points count.":""}</p>`);
+    ctx.play().innerHTML=`<div id="gh"></div>`;
+    const G=makeGrid($("#gh"),{xmin:-8,xmax:8,ymin:-8,ymax:8,U:24,snap:op==="k"?.5:1,xl:"Re",yl:"Im"});
+    G.seg(0,0,a1,b1,"seg");G.point(a1,b1,"",ctxt(a1,b1),(a1<0?"w":"e")+(b1<0?"s":"n"));
+    if(op!=="k"){G.seg(0,0,a2,b2,"seg2");G.point(a2,b2,"alt",ctxt(a2,b2),(a2<0?"w":"e")+(b2<0?"s":"n"));}
+    G.pick((x,y)=>{
+      if(x===ta&&y===tb){
+        G.pick(null);
+        if(op==="+"){G.seg(a1,b1,ta,tb,"guide");G.seg(a2,b2,ta,tb,"guide");}
+        G.seg(0,0,ta,tb,"seg good");G.point(ta,tb,"good",ctxt(ta,tb),(ta<0?"w":"e")+(tb<0?"s":"n"));
+        let work;
+        if(op==="+")work=`${M(`${expr} = (${num(a1)} + ${pn(a2)}) + (${num(b1)} + ${pn(b2)})${I} = ${cS(ta,tb)}`)}. Add real parts to real parts and imaginary to imaginary, like combining like terms.`;
+        else if(op==="−")work=`${M(`${expr} = ${z1} + (${cS(-a2,-b2)}) = ${cS(ta,tb)}`)}. Distribute the ${M(MINUS+"1")} to both parts, then add.`;
+        else work=`${M(`${expr} = ${cS(R(ta*2,2),R(tb*2,2))}`)}. Multiply both parts by the real number.`;
+        ctx.win(work);
+      }else{
+        flash(G.point(x,y,"bad"));
+        let msg;
+        if(x===tb&&y===ta&&ta!==tb)msg=`The real part goes across (horizontal) and the imaginary part goes up (vertical).`;
+        else if(op==="−"&&x===a1+a2&&y===b1+b2)msg=`That's the sum. To subtract, add the opposite: ${M(`${MINUS}(${z2}) = ${cS(-a2,-b2)}`)}.`;
+        else if(op==="−"&&x===ta&&y===b1+b2)msg=`Distribute the ${M(MINUS+"1")} to the imaginary part too: ${M(`${MINUS}(${z2}) = ${cS(-a2,-b2)}`)}.`;
+        else if(op==="−"&&x===a1+a2&&y===tb)msg=`Distribute the ${M(MINUS+"1")} to the real part too: ${M(`${MINUS}(${z2}) = ${cS(-a2,-b2)}`)}.`;
+        else if(op==="k")msg=`Multiply <b>both</b> parts by ${M(rS(k))}: the real part and the imaginary part.`;
+        else msg=`That's ${M(cS(R(x*2,2),R(y*2,2)))}. Combine the real parts and the imaginary parts separately.`;
+        ctx.miss(msg);
+      }
+    });
+  }
+};
+
+/* ---------- Station 3: multiply (Ex 6–7) ---------- */
+const S3={
+  name:"FOIL & Flip",sec:"Multiplying",rounds:5,
+  gen(r){
+    for(;;){
+      const a1=nz(6),b1=nz(5);let a2=nz(6),b2=nz(5);
+      if(r>=3){a2=a1;b2=-b1;}
+      if(r<3&&a2===a1&&b2===-b1)continue;
+      return {a1,b1,a2,b2,conj:r>=3};
+    }
+  },
+  round(r){
+    const {a1,b1,a2,b2,conj}=this.gen(r);
+    const re=a1*a2-b1*b2,im=a1*b2+b1*a2,p4=b1*b2;
+    const expr=`(${cS(a1,b1)})(${cS(a2,b2)})`;
+    ctx.prompt(`<p>Multiply ${M(expr)}. The box shows all four FOIL products. Tap the ${M(I+sup(2))} tile and use ${M(I+sup(2)+" = "+MINUS+"1")}, then combine like terms.</p>`);
+    ctx.play().innerHTML=`<div class="cbox">
+      <div></div><div class="hdr">${M(num(a2))}</div><div class="hdr">${M(term2(b2))}</div>
+      <div class="hdr">${M(num(a1))}</div><div class="cell re">${M(num(a1*a2))}</div><div class="cell im">${M(term2(a1*b2))}</div>
+      <div class="hdr">${M(term2(b1))}</div><div class="cell im">${M(term2(b1*a2))}</div><button type="button" class="cell i2" id="i2">${M(num(p4)+I+sup(2))}</button>
+    </div><ol class="steps" id="steps"></ol>`;
+    addStep("Step 1 · Replace i²",`<p>Which tile has ${M(I+sup(2))} in it? Tap it.</p>`);
+    let flipped=false;
+    ctx.play().querySelector(".cbox").addEventListener("click",e=>{
+      if(flipped)return;
+      if(e.target.closest("#i2")){
+        flipped=true;const b=$("#i2");b.classList.add("flipped");b.disabled=true;
+        b.innerHTML=M(`${num(p4)}(${MINUS}1) = ${num(-p4)}`);
+        ctx.say(`${M(`${num(p4)}${I}${sup(2)} = ${num(p4)}(${MINUS}1) = ${num(-p4)}`)}. That term is now a real number.`);
+        const items=[{h:M(cS(re,im)),ok:true},
+          {h:M(cS(a1*a2+b1*b2,im)),ok:false,why:`The ${M(I+sup(2))} term changes sign: ${M(`${num(p4)}${I}${sup(2)} = ${num(-p4)}`)}.`},
+          {h:M(cS(a1*a2,im-p4)),ok:false,why:`After the flip, ${M(num(-p4))} is a <b>real</b> number. Combine it with ${M(num(a1*a2))}, not with the ${M(I)} terms.`}];
+        const uniq=[];const seen=new Set();items.forEach(it=>{if(!seen.has(it.h)){seen.add(it.h);uniq.push(it);}});
+        const li=addStep("Step 2 · Combine like terms",`<p>${M(`${num(a1*a2)}${term2s(a1*b2)}${term2s(b1*a2)}${p4>0?` ${MINUS} `:" + "}${Math.abs(p4)}`)} = ?</p><div class="opts"></div>`);
+        choose($(".opts",li),uniq,()=>{
+          ctx.win(`${M(`${expr} = ${cS(re,im)}`)}.${conj?` These are <b>complex conjugates</b>: ${M(`(<i>a</i> + <i>b</i>${I})(<i>a</i> ${MINUS} <i>b</i>${I}) = <i>a</i>${sup(2)} + <i>b</i>${sup(2)}`)}, always a real, positive number.`:""}`);
+        });
+      }else if(e.target.closest(".cell"))ctx.say(`That tile has no ${M(I+sup(2))}. It stays as it is.`);
+    });
+  }
+};
+function term2(c){return termV(c,I,true);}
+function term2s(c){return termV(c,I,false);}
+
+/* ---------- Station 4: conjugates and division (Ex 8–9) ---------- */
+const S4={
+  name:"Conjugate Clear",sec:"Dividing",rounds:5,
+  gen(r){
+    for(;;){
+      const a=nz(6),b=nz(6),c=r===4?0:nz(5),d=nz(5);
+      return {a,b,c,d};
+    }
+  },
+  conjRound(){
+    const items=[];
+    const a=nz(7),b=nz(6);items.push({show:cS(a,b),ok:cS(a,-b),w1:cS(-a,b),w2:cS(-a,-b)});
+    const k=pick([R(1,2),R(3),R(2,3),R(5)]),s=pick([1,-1]),kk=R(s*k.n,k.d);
+    items.push({show:cS(R(0),kk),ok:cS(R(0),R(-kk.n,kk.d)),w1:cS(R(0),kk),w2:"0"});
+    const a3=nz(9),b3=nz(6);
+    items.push({show:`${term2(b3)}${a3<0?` ${MINUS} ${-a3}`:` + ${a3}`}`,ok:cS(a3,-b3),w1:cS(-a3,b3),w2:cS(a3,b3)});
+    ctx.prompt(`<p>State the complex conjugate of each number. The conjugate changes the sign of the <b>imaginary</b> part only.</p>`);
+    ctx.play().innerHTML=`<ol class="steps" id="steps"></ol>`;
+    let i=0;
+    const ask=()=>{
+      const it=items[i];
+      const li=addStep(`Number ${i+1} of 3`,`<p>Conjugate of ${M(it.show)}${i===2?` (rewrite it as ${M("<i>a</i> + <i>b</i>"+I)} first)`:""}?</p><div class="opts"></div>`);
+      const opts=[{h:M(it.ok),ok:true},{h:M(it.w1),ok:false,why:"Only the imaginary part changes sign. The real part stays the same."},{h:M(it.w2),ok:false,why:`Change the sign of the imaginary part: ${M("<i>a</i> + <i>b</i>"+I)} becomes ${M("<i>a</i> "+MINUS+" <i>b</i>"+I)}.`}].filter((o,j,arr)=>arr.findIndex(z=>z.h===o.h)===j);
+      choose($(".opts",li),opts,()=>{i++;ctx.say("");if(i<3)ask();else ctx.win(items.map(t=>`${M(t.show)} → ${M(t.ok)}`).join(" · "));});
+    };
+    ask();
+  },
+  round(r){
+    if(r===0)return this.conjRound();
+    const {a,b,c,d}=this.gen(r);
+    const D=c*c+d*d,nr=a*c+b*d,ni=b*c-a*d;
+    const top=cS(a,b),bot=cS(c,d),cj=cS(c,-d);
+    ctx.prompt(`<p>Divide ${M(fracH(top,bot))}. No ${M(I)}'s allowed in the denominator, so multiply top and bottom by the conjugate of the denominator.</p>`);
+    ctx.play().innerHTML=`<ol class="steps" id="steps"></ol>`;
+    const s1=addStep("Step 1 · Conjugate of the denominator",`<p>What is the conjugate of ${M(bot)}?</p><div class="opts"></div>`);
+    choose($(".opts",s1),[{h:M(cj),ok:true},{h:M(cS(-c,d)),ok:false,why:"Only the imaginary part changes sign."},{h:M(cS(-c,-d)),ok:false,why:"Only the imaginary part changes sign. The real part stays the same."}].filter((o,j,arr)=>arr.findIndex(z=>z.h===o.h)===j),()=>{
+      ctx.say("");
+      const s2=addStep("Step 2 · New denominator",`<p>${M(`(${bot})(${cj})`)} = ?</p><div class="opts"></div>`);
+      choose($(".opts",s2),[{h:M(num(D)),ok:true},{h:M(num(c*c-d*d)),ok:false,why:`${M(`${MINUS}${d*d}${I}${sup(2)} = +${d*d}`)} because ${M(I+sup(2)+" = "+MINUS+"1")}. Conjugates multiply to ${M(`<i>a</i>${sup(2)} + <i>b</i>${sup(2)}`)}.`},{h:M(cS(c*c,-d*d)),ok:false,why:`The middle terms cancel and ${M(I+sup(2)+" = "+MINUS+"1")}, so the result is a real number.`}].filter((o,j,arr)=>arr.findIndex(z=>z.h===o.h)===j),()=>{
+        ctx.say("");
+        const s3=addStep("Step 3 · New numerator",`<p>${M(`(${top})(${cj})`)} = ?</p><div class="opts"></div>`);
+        choose($(".opts",s3),[{h:M(cS(nr,ni)),ok:true},{h:M(cS(a*c-b*d,ni)),ok:false,why:`${M(`(${term2(b)})(${term2(-d)}) = ${num(-b*d)}${I}${sup(2)} = ${num(b*d)}`)}, since ${M(I+sup(2)+" = "+MINUS+"1")}.`},{h:M(cS(nr,-ni)),ok:false,why:"Check the signs on the imaginary terms when you FOIL."}].filter((o,j,arr)=>arr.findIndex(z=>z.h===o.h)===j),()=>{
+          ctx.say("");
+          const s4=addStep("Step 4 · Write it as a + bi",`<p>${M(fracH(cS(nr,ni),num(D)))} = ?</p><div class="opts"></div>`);
+          choose($(".opts",s4),[{h:M(cS(R(nr,D),R(ni,D))),ok:true},{h:M(cS(R(nr,D),R(ni))),ok:false,why:`Divide <b>both</b> parts by ${M(num(D))}.`},{h:M(cS(R(ni,D),R(nr,D))),ok:false,why:"The real part and the imaginary part got swapped."}].filter((o,j,arr)=>arr.findIndex(z=>z.h===o.h)===j),()=>{
+            ctx.win(M(`${fracH(top,bot)} · ${fracH(cj,cj)} = ${fracH(cS(nr,ni),num(D))} = ${cS(R(nr,D),R(ni,D))}`));
+          });
+        });
+      });
+    });
+  }
+};
+
+/* ---------- Station 5: powers of i speed round (Ex 10) ---------- */
+const S5={
+  name:"Spin Cycle",sec:"Powers of i",rounds:1,
+  round(){
+    const VAL=["1",I,MINUS+"1",MINUS+I],KEY={"1":0,"2":1,"3":2,"4":3};
+    ctx.prompt(`<p>60 seconds. Every power of ${M(I)} is a quarter turn: ${M(I+sup(0)+" = 1")}, ${M(I+sup(1)+" = "+I)}, ${M(I+sup(2)+" = "+MINUS+"1")}, ${M(I+sup(3)+" = "+MINUS+I)}, then it repeats. Divide the exponent by 4 and use the remainder. Tap where each power lands. Keys 1 to 4 work too (1, ${I}, ${MINUS}1, ${MINUS}${I}). Scores of 5, 10 and 15 earn one, two and three stars.</p>`);
+    ctx.play().innerHTML=`<div class="speed"><div class="timer"><div class="bar" id="bar"></div></div>
+      <div class="speed-top"><span id="clock">60.0 s</span><span id="score">Score 0</span></div>
+      <div class="dial" id="dial">
+        <button type="button" class="dbtn top" data-v="1" disabled><kbd>2</kbd> ${M(I)}</button>
+        <button type="button" class="dbtn left" data-v="2" disabled><kbd>3</kbd> ${M(MINUS+"1")}</button>
+        <div class="hub m" id="claim">${I}${sup(18)}</div>
+        <button type="button" class="dbtn right" data-v="0" disabled><kbd>1</kbd> ${M("1")}</button>
+        <button type="button" class="dbtn bottom" data-v="3" disabled><kbd>4</kbd> ${M(MINUS+I)}</button>
+      </div></div>`;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="start">Start the clock</button>`;
+    ctx.say(`Sample: ${M(`18 ÷ 4 = 4`)} remainder ${M("2")}, so ${M(I+sup(18)+" = "+I+sup(2)+" = "+MINUS+"1")}.`);
+    let score=0,seen=0,cur=null,locked=true,t0=0,tick=null,wait=null,running=false;
+    const btns=[...ctx.play().querySelectorAll(".dbtn")];
+    function next(){let n;do{n=rnd(0,99);}while(n===cur);cur=n;$("#claim").innerHTML=I+sup(n);locked=false;btns.forEach(b=>{b.disabled=false;});}
+    function end(){
+      running=false;clearInterval(tick);clearTimeout(wait);
+      const st=score>=15?3:score>=10?2:score>=5?1:0;
+      finish(st,`You landed ${score} of ${seen} powers correctly in 60 seconds.${st<3?" Reach 15 for three stars.":""}`);
+    }
+    function answer(v){
+      if(locked||!running)return;
+      locked=true;btns.forEach(b=>{b.disabled=true;});seen++;
+      const rem=cur%4,ok=v===rem;
+      const why=`${M(`${cur} ÷ 4 = ${Math.floor(cur/4)}`)} remainder ${M(String(rem))}, so ${M(`${I}${sup(cur)} = ${I}${sup(rem)} = ${VAL[rem]}`)}.`;
+      if(ok){score++;$("#score").textContent=`Score ${score}`;ctx.say(`✓ ${why}`,"good");}
+      else ctx.say(`✗ ${why}`,"bad");
+      wait=setTimeout(next,ok?700:2000);
+    }
+    $("#start").onclick=()=>{
+      $("#actions").innerHTML="";ctx.say("");running=true;t0=performance.now();
+      tick=setInterval(()=>{
+        const left=Math.max(0,60-(performance.now()-t0)/1000);
+        $("#clock").textContent=left.toFixed(1)+" s";$("#bar").style.transform=`scaleX(${left/60})`;
+        if(left<=0)end();
+      },100);
+      next();
+    };
+    $("#dial").addEventListener("click",e=>{const b=e.target.closest(".dbtn");if(b)answer(+b.dataset.v);});
+    S.key=e=>{const v=KEY[e.key];if(v!==undefined)answer(v);};
+    S.cleanup=()=>{running=false;clearInterval(tick);clearTimeout(wait);};
+  }
+};
+
+const STATIONS=[S1,S2,S3,S4,S5];
+
+$("#rail").addEventListener("click",e=>{const b=e.target.closest(".st-btn");if(b)loadStation(+b.dataset.i);});
+document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(S.key)S.key(e);});
+let armed=false;
+$("#reset").onclick=e=>{
+  if(!armed){armed=true;e.target.textContent="Tap again to erase all stars";setTimeout(()=>{armed=false;e.target.textContent="Reset stars";},4000);return;}
+  best={};store.set(best);armed=false;e.target.textContent="Stars reset";renderNav();
+};
+renderNav();startRound();
+})();
+</script>
+</body>
+</html>

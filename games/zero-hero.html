@@ -1,0 +1,702 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>:root{color-scheme:light dark}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Zero Hero</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=STIX+Two+Text:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+/* Layout: same graph-paper workbench as the series. Every solved equation ends with its parabola
+   crossing the x-axis at the solutions (or missing it, when the solutions are complex).
+   blue = x² tile / curve, green = x tiles / roots, amber = unit tiles, rose = slips. */
+:root{
+  --paper:#eef3f6; --grid:#dbe4eb; --card:#ffffff; --ink:#17222d; --muted:#556472; --line:#c7d3dd;
+  --sq:#2c5cc9; --sq-soft:#dce6fb; --lin:#1b845a; --lin-soft:#d5efe2;
+  --unit:#b9770a; --unit-soft:#fcecc9; --neg:#c3364d; --neg-soft:#f8dce1;
+  --f-display:"Bricolage Grotesque","Avenir Next","Segoe UI",system-ui,sans-serif;
+  --f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-math:"STIX Two Text","Cambria","Times New Roman",serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+    --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+    --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f151b; --grid:#18212a; --card:#162029; --ink:#e3eaf0; --muted:#98a7b4; --line:#2b3a47;
+  --sq:#80a6ff; --sq-soft:#1e2d52; --lin:#4fcf95; --lin-soft:#153a2a;
+  --unit:#f1b54a; --unit-soft:#3d2e12; --neg:#ff8094; --neg-soft:#4a1d27; color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background-color:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:16px;line-height:1.5;
+  background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:24px 24px}
+.wrap{max-width:1040px;margin:0 auto;display:grid;gap:18px;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:28px 40px}
+.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px}
+h1{font-family:var(--f-display);font-weight:800;font-size:clamp(2.1rem,6vw,3.2rem);letter-spacing:-.025em;line-height:1;margin:0}
+h1 .dot{display:inline-block;width:.32em;height:.32em;border-radius:50%;background:var(--neg);margin:0 .08em .06em;vertical-align:baseline}
+h1 .tw{color:var(--sq)}
+.sub{margin:10px 0 0;color:var(--muted);max-width:62ch}
+.total{display:flex;align-items:baseline;gap:6px;font-family:var(--f-display);background:var(--card);border:1.5px solid var(--line);border-radius:10px;padding:6px 14px}
+.tot-n{font-size:1.8rem;font-weight:800;color:var(--unit);font-variant-numeric:tabular-nums}
+.tot-of{color:var(--muted);font-size:.9rem}
+.rail-wrap{overflow-x:auto;padding:4px;margin:-4px}
+.rail{display:grid;grid-template-columns:repeat(5,minmax(150px,1fr));gap:8px;list-style:none;margin:0;padding:0}
+.st-btn{width:100%;height:100%;text-align:left;border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:10px;padding:10px 12px;font:inherit;cursor:pointer;display:grid;gap:1px;align-content:start}
+.st-btn:hover{border-color:var(--sq)}
+.st-btn[aria-current="true"]{border-color:var(--sq);box-shadow:0 0 0 3px var(--sq-soft)}
+.st-num{font-size:.7rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.st-name{font-family:var(--f-display);font-weight:600;font-size:1.02rem;line-height:1.2}
+.st-topic{font-size:.82rem;color:var(--muted)}
+.st-stars{color:var(--unit);letter-spacing:2px;font-size:.95rem;margin-top:4px}
+.stage{background:var(--card);border:1.5px solid var(--line);border-radius:14px;padding:clamp(16px,3.2vw,30px);display:grid;gap:16px;min-width:0}
+.stage-head{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:10px}
+.eyebrow{margin:0;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+h2{font-family:var(--f-display);font-weight:800;font-size:clamp(1.5rem,4vw,2rem);margin:2px 0 0;letter-spacing:-.015em;text-wrap:balance}
+.dots{display:flex;gap:6px;list-style:none;margin:0;padding:0}
+.dots li{min-width:34px;height:30px;padding:0 6px;border-radius:15px;border:1.5px solid var(--line);display:grid;place-items:center;font-size:.8rem;color:var(--muted);font-variant-numeric:tabular-nums}
+.dots li.now{border-color:var(--sq);color:var(--sq);font-weight:700}
+.dots li.done{background:var(--unit-soft);border-color:var(--unit);color:var(--unit);letter-spacing:-1px}
+.prompt{font-size:1.08rem;max-width:72ch}
+.prompt p{margin:0}
+.m{font-family:var(--f-math);font-size:1.18em;white-space:nowrap}
+.m i{font-style:italic}
+.m .m{font-size:1em}
+sup{font-size:.68em;line-height:0}
+.frac{display:inline-grid;vertical-align:middle;text-align:center;margin:0 .12em;line-height:1.3}
+.frac>.fn{padding:0 .25em .06em}
+.frac>.fd{border-top:1.5px solid currentColor;padding:.06em .25em 0}
+.rad{border-top:1.5px solid currentColor;padding:0 .1em}
+.lbl{margin:0 0 6px;font-size:.74rem;letter-spacing:.09em;text-transform:uppercase;color:var(--muted)}
+.play{display:grid;gap:16px;min-width:0}
+.fb{min-height:1.6em;font-size:1.02rem;padding:10px 14px;border-radius:10px;border:1.5px dashed var(--line);color:var(--muted);overflow-x:auto}
+.fb:empty{border-color:transparent;padding-block:0;min-height:0}
+.fb.good{border:1.5px solid var(--lin);background:var(--lin-soft);color:var(--ink)}
+.fb.bad{border:1.5px solid var(--neg);background:var(--neg-soft);color:var(--ink)}
+.fb-stars{color:var(--unit);letter-spacing:2px;margin-right:6px}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.actions:empty{display:none}
+.btn{font:inherit;font-weight:700;border-radius:9px;padding:10px 18px;border:1.5px solid var(--ink);background:var(--card);color:var(--ink);cursor:pointer}
+.btn.primary{background:var(--ink);color:var(--card)}
+.btn:disabled{opacity:.45;cursor:default}
+button:focus-visible{outline:3px solid var(--sq);outline-offset:2px}
+.shake{animation:shake .35s}
+@keyframes shake{20%{transform:translateX(-6px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}100%{transform:none}}
+@media (prefers-reduced-motion: reduce){.shake{animation:none!important}}
+.split{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:22px;align-items:start}
+@media (max-width:760px){.split{grid-template-columns:minmax(0,1fr)}}
+.steps{list-style:none;margin:0;padding:0;display:grid;gap:14px}
+.steps>li{border-left:3px solid var(--line);padding:2px 0 2px 14px;display:grid;gap:8px;min-width:0}
+.steps>li.on{border-left-color:var(--sq)}
+.steps>li.ok{border-left-color:var(--lin)}
+.steps p{margin:0}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{font:inherit;padding:8px 16px;border-radius:9px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.opt:hover:not(:disabled){border-color:var(--sq)}
+.opt.miss{border-color:var(--neg);background:var(--neg-soft)}
+.opt.hit{border-color:var(--lin);background:var(--lin-soft)}
+.opt:disabled{cursor:default}
+.work{overflow-x:auto}
+
+/* coordinate grid */
+.gridwrap{display:flex;justify-content:center;min-width:0}
+svg.grid{width:100%;max-width:460px;height:auto;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+svg.grid.picking{cursor:crosshair}
+svg.grid .gl{stroke:var(--line);stroke-width:1}
+svg.grid .ax{stroke:var(--ink);stroke-width:1.8}
+svg.grid .tk{font:11px var(--f-body);fill:var(--muted)}
+svg.grid .axl{font:italic 15px var(--f-math);fill:var(--ink)}
+svg.grid .pt{fill:var(--sq);stroke:var(--card);stroke-width:2}
+svg.grid .pt.good{fill:var(--lin)}
+svg.grid .pt.bad{fill:var(--neg)}
+svg.grid .pt.target{fill:var(--unit)}
+svg.grid .plab{font:700 13px var(--f-body);fill:var(--ink);paint-order:stroke;stroke:var(--card);stroke-width:4px;stroke-linejoin:round}
+svg.grid .plab.leg{fill:var(--unit)}
+svg.grid .tag rect{fill:var(--unit-soft);stroke:var(--unit);stroke-width:1.8}
+svg.grid .tag text{font:700 15px var(--f-body);fill:var(--ink);font-variant-numeric:tabular-nums}
+svg.grid .ln{stroke:var(--sq);stroke-width:2.6;fill:none}
+svg.grid .ln.good{stroke:var(--lin)}
+svg.grid .seg{stroke:var(--sq);stroke-width:2.6}
+svg.grid .leg{stroke:var(--unit);stroke-width:2.4;stroke-dasharray:6 4}
+svg.grid .guide{stroke:var(--muted);stroke-width:1.4;stroke-dasharray:4 4}
+svg.grid .ra{fill:none;stroke:var(--unit);stroke-width:1.6}
+svg.grid .circ{fill:none;stroke:var(--lin);stroke-width:2.4}
+svg.grid .ghost circle{fill:none;stroke:var(--sq);stroke-width:2}
+svg.grid .ghost text{font:700 12px var(--f-body);fill:var(--sq);paint-order:stroke;stroke:var(--card);stroke-width:4px}
+
+table.tbl{border-collapse:collapse;font-variant-numeric:tabular-nums}
+table.tbl th,table.tbl td{padding:6px 14px;border-bottom:1px solid var(--line);text-align:left}
+table.tbl th{font-weight:400;color:var(--muted)}
+table.tbl tr.now td{background:var(--sq-soft)}
+table.tbl tr.done td{color:var(--lin)}
+
+/* speed */
+.speed{display:grid;gap:14px;justify-items:center;text-align:center}
+.timer{width:100%;height:10px;border-radius:5px;background:var(--grid);overflow:hidden}
+.timer .bar{height:100%;width:100%;background:var(--sq);transform-origin:left;transition:transform .1s linear}
+.speed-top{width:100%;display:flex;justify-content:space-between;font-weight:700;font-variant-numeric:tabular-nums}
+.claim{font-size:clamp(1.8rem,7vw,2.8rem);margin:0}
+.choices{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;width:100%}
+.choice{font:inherit;font-weight:700;padding:14px 8px;border-radius:10px;border:1.5px solid var(--line);background:var(--card);color:var(--ink);cursor:pointer}
+.choice:hover:not(:disabled){border-color:var(--sq)}
+.choice:disabled{opacity:.5;cursor:default}
+kbd{font-family:var(--f-body);font-size:.75rem;border:1px solid var(--line);border-radius:4px;padding:0 5px;color:var(--muted)}
+@media (max-width:480px){.choices{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.summary{display:grid;gap:10px;justify-items:start}
+.bigstars{font-size:3rem;color:var(--unit);letter-spacing:6px;margin:0;line-height:1}
+.summary p{margin:0;max-width:60ch}
+footer{display:flex;flex-wrap:wrap;justify-content:space-between;gap:10px;color:var(--muted);font-size:.85rem}
+.linkbtn{font:inherit;background:none;border:0;color:var(--muted);text-decoration:underline;cursor:pointer;padding:0}
+
+.ctrl{display:flex;align-items:center;justify-content:space-between;gap:10px;font-weight:700;max-width:340px}
+.stepper{display:inline-flex;align-items:center;border:1.5px solid var(--line);border-radius:9px;background:var(--card)}
+.stepper button{font:inherit;font-size:1.15rem;width:38px;height:38px;border:0;background:transparent;color:var(--ink);cursor:pointer}
+.stepper button:disabled{opacity:.35;cursor:default}
+.stepper output{min-width:48px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.howto{margin:0;color:var(--muted)}
+
+.zrows{display:grid;gap:10px}
+.zrow{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+span.opt{display:inline-block}
+.meter{font-weight:700}
+.meter:empty{display:none}
+.tilebox{overflow-x:auto}
+svg.tiles{width:100%;max-width:300px;height:auto}
+svg.tiles .tsq{fill:var(--sq-soft);stroke:var(--sq);stroke-width:2}
+svg.tiles .tlin{fill:var(--lin-soft);stroke:var(--lin);stroke-width:2}
+svg.tiles .tunit{fill:var(--unit-soft);stroke:var(--unit);stroke-width:1.5}
+svg.tiles .thole{fill:none;stroke:var(--muted);stroke-width:1.2;stroke-dasharray:3 3}
+svg.tiles .tl{font:italic 15px var(--f-math);fill:var(--muted)}
+svg.tiles .tin{font:italic 22px var(--f-math);fill:var(--ink)}
+svg.tiles .tin.small{font-size:15px}
+.over{margin:4px 0 0;color:var(--neg);font-weight:700}
+</style>
+
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Zero <span class="tw">Hero</span></h1>
+      <p class="sub">A quadratic equations game for Math 115, Section 2.5. Solve by factoring, the square root method, the quadratic formula, and completing the square with tiles, then watch the parabola cross the x-axis at your answers. Five stations: a clean round earns three stars, and each slip costs one.</p>
+    </div>
+    <div class="total" id="total" aria-live="polite"></div>
+  </header>
+  <nav class="rail-wrap" aria-label="Stations"><ol class="rail" id="rail"></ol></nav>
+  <main class="stage" id="stage"></main>
+  <footer>
+    <span>Stars are saved in this browser only.</span>
+    <button class="linkbtn" id="reset" type="button">Reset stars</button>
+  </footer>
+</div>
+
+<script>
+(function(){
+"use strict";
+const $=(s,r=document)=>r.querySelector(s);
+const gcd=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b){[a,b]=[b,a%b];}return a;};
+const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const shuffle=a=>{for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
+const nz=n=>{let v=0;while(!v)v=rnd(-n,n);return v;};
+const MINUS="−";
+const sup=e=>`<sup>${e}</sup>`;
+const M=h=>`<span class="m">${h}</span>`;
+const fracH=(n,d)=>d==="1"?n:`<span class="frac"><span class="fn">${n}</span><span class="fd">${d}</span></span>`;
+const starStr=n=>"★".repeat(n)+"☆".repeat(3-n);
+const num=v=>(v<0?MINUS:"")+Math.abs(v);
+const pn=v=>v<0?`(${num(v)})`:num(v);
+const R=(n,d=1)=>{if(d<0){n=-n;d=-d;}const g=gcd(n,d)||1;return {n:n/g,d:d/g};};
+const rS=r=>r.d===1?num(r.n):(r.n<0?MINUS:"")+fracH(String(Math.abs(r.n)),String(r.d));
+const X="<i>x</i>",Y="<i>y</i>";
+function termV(c,v,first){const a=Math.abs(c),body=(a===1&&v)?v:(a+v);if(first)return (c<0?MINUS:"")+body;return (c<0?` ${MINUS} `:" + ")+body;}
+function coefX(m){if(m.n===0)return "";if(m.d===1)return termV(m.n,X,true);return (m.n<0?MINUS:"")+fracH(String(Math.abs(m.n)),String(m.d))+X;}
+function siRHS(m,b){const mx=coefX(m);if(b.n===0)return mx||"0";if(!mx)return rS(b);return mx+(b.n<0?` ${MINUS} `:" + ")+rS(R(Math.abs(b.n),b.d));}
+function eqStd(A,B,C){let s="",f=true;if(A){s+=termV(A,X,true);f=false;}if(B)s+=termV(B,Y,f);return s+" = "+num(C);}
+const coordTxt=(x,y)=>`(${num(x)}, ${num(y)})`;
+const radS=n=>{const s=Math.round(Math.sqrt(n));return s*s===n?String(s):`√<span class="rad">${n}</span> ≈ ${Math.sqrt(n).toFixed(2)}`;};
+
+/* ---------- coordinate grid ---------- */
+const SVGNS="http://www.w3.org/2000/svg";let gridSeq=0;
+function makeGrid(host,o){
+  const xmin=o.xmin,xmax=o.xmax,ymin=o.ymin,ymax=o.ymax,U=o.U||26,pad=22,snap=o.snap||1,tick=o.tick||2;
+  const W=(xmax-xmin)*U+2*pad,H=(ymax-ymin)*U+2*pad;
+  const X=x=>pad+(x-xmin)*U,Y=y=>pad+(ymax-y)*U;
+  const cid="clip"+(++gridSeq);
+  let h=`<div class="gridwrap"><svg class="grid" viewBox="0 0 ${W} ${H}" role="img" aria-label="Coordinate grid from ${xmin} to ${xmax}"><defs><clipPath id="${cid}"><rect x="${X(xmin)}" y="${Y(ymax)}" width="${(xmax-xmin)*U}" height="${(ymax-ymin)*U}"/></clipPath></defs><g>`;
+  for(let x=xmin;x<=xmax;x++)h+=`<line class="gl" x1="${X(x)}" y1="${Y(ymin)}" x2="${X(x)}" y2="${Y(ymax)}"/>`;
+  for(let y=ymin;y<=ymax;y++)h+=`<line class="gl" x1="${X(xmin)}" y1="${Y(y)}" x2="${X(xmax)}" y2="${Y(y)}"/>`;
+  h+=`<line class="ax" x1="${X(xmin)}" y1="${Y(0)}" x2="${X(xmax)}" y2="${Y(0)}"/><line class="ax" x1="${X(0)}" y1="${Y(ymin)}" x2="${X(0)}" y2="${Y(ymax)}"/>`;
+  for(let x=xmin;x<=xmax;x++)if(x&&x%tick===0)h+=`<text class="tk" x="${X(x)}" y="${Y(0)+14}" text-anchor="middle">${num(x)}</text>`;
+  for(let y=ymin;y<=ymax;y++)if(y&&y%tick===0)h+=`<text class="tk" x="${X(0)-5}" y="${Y(y)+4}" text-anchor="end">${num(y)}</text>`;
+  h+=`<text class="axl" x="${X(xmax)-4}" y="${Y(0)-7}" text-anchor="end">${o.xl||"x"}</text><text class="axl" x="${X(0)+7}" y="${Y(ymax)+14}">${o.yl||"y"}</text>`;
+  h+=`</g><g clip-path="url(#${cid})" class="L-shapes"></g><g class="L-pts"></g><g class="ghost"></g></svg></div>`;
+  host.innerHTML=h;
+  const svg=host.querySelector("svg"),shapes=svg.querySelector(".L-shapes"),pts=svg.querySelector(".L-pts"),ghost=svg.querySelector(".ghost");
+  let pickCb=null;
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function at(e){
+    const r=svg.getBoundingClientRect(),sx=(e.clientX-r.left)*W/r.width,sy=(e.clientY-r.top)*H/r.height;
+    const x=clamp(Math.round((xmin+(sx-pad)/U)/snap)*snap,xmin,xmax),y=clamp(Math.round((ymax-(sy-pad)/U)/snap)*snap,ymin,ymax);
+    return {x:x||0,y:y||0};
+  }
+  svg.addEventListener("pointermove",e=>{
+    if(!pickCb){ghost.innerHTML="";return;}
+    const p=at(e),right=X(p.x)>W-90;
+    ghost.innerHTML=`<circle cx="${X(p.x)}" cy="${Y(p.y)}" r="8"/><text x="${X(p.x)+(right?-11:11)}" y="${Y(p.y)-11}" text-anchor="${right?"end":"start"}">${coordTxt(p.x,p.y)}</text>`;
+  });
+  svg.addEventListener("pointerleave",()=>{ghost.innerHTML="";});
+  svg.addEventListener("click",e=>{if(!pickCb)return;const p=at(e);pickCb(p.x,p.y);});
+  const add=(layer,s)=>{const g=document.createElementNS(SVGNS,"g");g.innerHTML=s;layer.appendChild(g);return g;};
+  const api={
+    pick(cb){pickCb=cb;svg.classList.toggle("picking",!!cb);if(!cb)ghost.innerHTML="";},
+    point(x,y,cls="",label="",pos="ne"){
+      const w=pos.includes("w"),s=pos.includes("s");
+      let t=`<circle class="pt ${cls}" cx="${X(x)}" cy="${Y(y)}" r="6.5"/>`;
+      if(label)t+=`<text class="plab" x="${X(x)+(w?-10:10)}" y="${Y(y)+(s?19:-10)}" text-anchor="${w?"end":"start"}">${label}</text>`;
+      return add(pts,t);
+    },
+    text(x,y,str,cls="plab",anchor="middle",dy=0){return add(pts,`<text class="${cls}" x="${X(x)}" y="${Y(y)+dy}" text-anchor="${anchor}">${str}</text>`);},
+    line(x1,y1,x2,y2,cls=""){
+      let a,b,c,d;
+      if(x1===x2){a=c=x1;b=ymin-1;d=ymax+1;}else{const m=(y2-y1)/(x2-x1);a=xmin-1;c=xmax+1;b=y1+m*(a-x1);d=y1+m*(c-x1);}
+      return add(shapes,`<line class="ln ${cls}" x1="${X(a)}" y1="${Y(b)}" x2="${X(c)}" y2="${Y(d)}"/>`);
+    },
+    seg(x1,y1,x2,y2,cls="seg"){return add(shapes,`<line class="${cls}" x1="${X(x1)}" y1="${Y(y1)}" x2="${X(x2)}" y2="${Y(y2)}"/>`);},
+    circle(cx,cy,r){return add(shapes,`<circle class="circ" cx="${X(cx)}" cy="${Y(cy)}" r="${r*U}"/>`);},
+    tag(x,y,str,side){
+      const w=str.length*8.6+18,h=26,gap=10;
+      let cx=X(x),cy=Y(y);
+      if(side==="l")cx-=w/2+gap;else if(side==="r")cx+=w/2+gap;else if(side==="u")cy-=h/2+gap;else cy+=h/2+gap;
+      cx=Math.max(w/2+2,Math.min(W-w/2-2,cx));cy=Math.max(h/2+2,Math.min(H-h/2-2,cy));
+      return add(pts,`<g class="tag"><rect x="${cx-w/2}" y="${cy-h/2}" width="${w}" height="${h}" rx="7"/><text x="${cx}" y="${cy+5}" text-anchor="middle">${str}</text></g>`);
+    },
+    rightAngle(cx,cy,tx,ty){
+      const sx=Math.sign(tx-cx)*.45,sy=Math.sign(ty-cy)*.45;
+      return add(shapes,`<polyline class="ra" points="${X(cx+sx)},${Y(cy)} ${X(cx+sx)},${Y(cy+sy)} ${X(cx)},${Y(cy+sy)}"/>`);
+    }
+  };
+  api.curve=(f,cls="")=>{let d="";for(let x=xmin-.5;x<=xmax+.5;x+=.05){const y=Math.max(ymin-50,Math.min(ymax+50,f(x)));d+=(d?" L":"M")+X(x).toFixed(1)+" "+Y(y).toFixed(1);}return add(shapes,`<path class="ln ${cls}" d="${d}"/>`);};
+  return api;
+}
+
+/* ---------- UI helpers ---------- */
+function addStep(label,body){
+  const ol=$("#steps");ol.querySelectorAll("li.on").forEach(l=>{l.className="ok";});
+  const li=document.createElement("li");li.className="on";li.innerHTML=`<p class="lbl">${label}</p>${body}`;
+  ol.appendChild(li);return li;
+}
+function choose(host,items,onOK,mix=true){
+  const list=mix?shuffle(items.slice()):items.slice();
+  host.innerHTML=list.map((it,i)=>`<button type="button" class="opt" data-i="${i}">${it.h}</button>`).join("");
+  host.addEventListener("click",e=>{
+    const b=e.target.closest(".opt");if(!b||b.disabled)return;
+    const it=list[+b.dataset.i];
+    if(it.ok){b.classList.add("hit");host.querySelectorAll(".opt").forEach(x=>{x.disabled=true;});onOK();}
+    else{b.classList.add("miss");b.disabled=true;ctx.miss(it.why);}
+  });
+}
+const flash=g=>setTimeout(()=>g.remove(),900);
+
+/* ---------- shell ---------- */
+const store={
+  get(){try{return JSON.parse(localStorage.getItem("zero-hero-stars")||"{}")||{};}catch(e){return {};}},
+  set(o){try{localStorage.setItem("zero-hero-stars",JSON.stringify(o));}catch(e){}}
+};
+let best=store.get();
+const S={st:0,round:0,mistakes:0,roundStars:[],cleanup:null,key:null};
+function renderNav(){
+  $("#rail").innerHTML=STATIONS.map((st,i)=>`<li><button type="button" class="st-btn" data-i="${i}" aria-current="${i===S.st}"><span class="st-num">Station ${i+1}</span><span class="st-name">${st.name}</span><span class="st-topic">${st.sec}</span><span class="st-stars" aria-label="${best[i]||0} of 3 stars">${starStr(best[i]||0)}</span></button></li>`).join("");
+  const tot=STATIONS.reduce((s,_,i)=>s+(best[i]||0),0);
+  $("#total").innerHTML=`<span class="tot-n">${tot}</span><span class="tot-of">of ${STATIONS.length*3} stars</span>`;
+}
+function teardown(){if(S.cleanup){S.cleanup();S.cleanup=null;}S.key=null;}
+function loadStation(i){teardown();S.st=i;S.round=0;S.roundStars=[];renderNav();startRound();}
+function startRound(){
+  teardown();S.mistakes=0;
+  const st=STATIONS[S.st];
+  $("#stage").innerHTML=`<div class="stage-head"><div><p class="eyebrow">Station ${S.st+1} · ${st.sec}</p><h2>${st.name}</h2></div>${st.rounds>1?`<ol class="dots" id="dots" aria-label="Round progress"></ol>`:""}</div>
+  <div class="prompt" id="prompt"></div><div class="play" id="play"></div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="actions"></div>`;
+  renderDots();st.round(S.round);
+}
+function renderDots(){
+  const d=$("#dots");if(!d)return;let h="";
+  for(let i=0;i<STATIONS[S.st].rounds;i++){const s=S.roundStars[i];h+=`<li class="${s?"done":i===S.round?"now":""}" aria-label="Round ${i+1}${s?`: ${s} stars`:""}">${s?"★".repeat(s):i+1}</li>`;}
+  d.innerHTML=h;
+}
+const ctx={
+  prompt(h){$("#prompt").innerHTML=h;},
+  play(){return $("#play");},
+  say(h,k=""){const f=$("#fb");if(!f)return;f.className="fb"+(k?" "+k:"");f.innerHTML=h;},
+  miss(h){S.mistakes++;ctx.say(h,"bad");const p=$("#play");if(!p)return;p.classList.remove("shake");void p.offsetWidth;p.classList.add("shake");},
+  win(h){
+    const s=S.mistakes===0?3:S.mistakes===1?2:1;S.roundStars[S.round]=s;renderDots();
+    ctx.say(`<span class="fb-stars" aria-label="${s} stars">${starStr(s)}</span>${h}`,"good");
+    const last=S.round>=STATIONS[S.st].rounds-1;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="next">${last?"See results":"Next round"} →</button>`;
+    $("#next").onclick=()=>{
+      S.round++;
+      if(S.round>=STATIONS[S.st].rounds){const avg=S.roundStars.reduce((a,b)=>a+b,0)/S.roundStars.length;finish(Math.round(avg),`Round stars: ${S.roundStars.join(", ")}. A three-star round has no slips.`);}
+      else startRound();
+    };
+    $("#next").focus({preventScroll:true});
+  }
+};
+function finish(n,detail){
+  teardown();
+  const i=S.st;if(n>(best[i]||0)){best[i]=n;store.set(best);}
+  renderNav();
+  const nx=(i+1)%STATIONS.length;
+  $("#stage").innerHTML=`<div class="summary"><p class="eyebrow">Station ${i+1} complete</p><h2>${STATIONS[i].name}</h2>
+  <p class="bigstars" aria-label="${n} of 3 stars">${starStr(n)}</p><p>${detail}</p>
+  <div class="actions"><button type="button" class="btn" id="again">Play again</button><button type="button" class="btn primary" id="go">Station ${nx+1}: ${STATIONS[nx].name} →</button></div></div>`;
+  $("#again").onclick=()=>loadStation(i);
+  $("#go").onclick=()=>loadStation(nx);
+}
+
+/* ---------- quadratic helpers ---------- */
+const I="<i>i</i>";
+const radH=n=>`√<span class="rad">${n}</span>`;
+const term=(c,xp=0,first=true)=>termV(c,xp?X+(xp>1?sup(xp):""):"",first);
+function lin(a,b){let s="",f=true;if(a){s+=term(a,1,true);f=false;}if(b||f)s+=f?num(b):term(b,0,false);return s;}
+const trim=p=>{p=p.slice();while(p.length>1&&p[p.length-1]===0)p.pop();return p;};
+const pmul=(p,q)=>{const r=Array(p.length+q.length-1).fill(0);p.forEach((a,i)=>q.forEach((b,j)=>{r[i+j]+=a*b;}));return trim(r);};
+const peq=(p,q)=>{p=trim(p);q=trim(q);return p.length===q.length&&p.every((v,i)=>v===q[i]);};
+function pstr(p){p=trim(p);let s="",f=true;for(let i=p.length-1;i>=0;i--){if(!p[i])continue;s+=term(p[i],i,f);f=false;}return f?"0":s;}
+const fpoly=f=>[f.b,f.a];
+const prodPoly=fs=>fs.reduce((p,f)=>pmul(p,fpoly(f)),[1]);
+const fStr=f=>f.b===0?term(f.a,1,true):`(${lin(f.a,f.b)})`;
+const prodStr=fs=>{const xs=fs.filter(f=>f.b===0),o=fs.filter(f=>f.b!==0);return xs.map(fStr).join("")+o.map(fStr).join("");};
+const fz=f=>R(-f.b,f.a);
+function simpRad(n){let k=1,m=n;for(let d=2;d*d<=m;d++){while(m%(d*d)===0){m/=d*d;k*=d;}}return [k,m];}
+const radStr=(k,m)=>m===1?String(k):(k===1?"":k)+radH(m);
+function qf(b,D,den){
+  if(D>=0){const s=Math.round(Math.sqrt(D));if(s*s===D){const r1=R(-b-s,den),r2=R(-b+s,den);return D===0?`${X} = ${rS(r1)}`:`${X} = ${rS(r1)} and ${X} = ${rS(r2)}`;}}
+  const [k,m]=simpRad(Math.abs(D));const g=gcd(gcd(b,k),den)||1;
+  let nb=-b/g,kk=k/g,dd=den/g;if(dd<0){nb=-nb;dd=-dd;}
+  const rad=radStr(kk,m)+(D<0?" "+I:"");
+  const numer=nb?`${num(nb)} ± ${rad}`:`±${rad}`;
+  return `${X} = `+(dd===1?numer:fracH(numer,String(dd)));
+}
+function graphPanel(){return `<div><p class="lbl">Graph of the left side, with 0 on the right</p><div id="gh"></div><p class="howto" id="gnote">The graph appears when you solve the equation. Real solutions are where it crosses the ${M(X)}-axis.</p></div>`;}
+function showGraph(coefs,roots){
+  const G=makeGrid($("#gh"),{xmin:-8,xmax:8,ymin:-10,ymax:10,U:20});
+  const f=x=>coefs.reduce((s,c,i)=>s+c*x**i,0);
+  G.curve(f);
+  roots.forEach(r=>G.point(r,0,"good",""));
+  return G;
+}
+function uniqOpts(items){const seen=new Set();return items.filter(it=>{if(seen.has(it.h))return false;seen.add(it.h);return true;});}
+
+/* ---------- Station 1: zero product property (Ex 1–4) ---------- */
+const S1={
+  name:"Zero Product",sec:"Solving by factoring",rounds:5,
+  gen(r){
+    const type=r<4?r:rnd(0,3);
+    for(;;){
+      if(type===0){const p=nz(7),q=nz(7);if(p===q)continue;const fs=[{a:1,b:-p},{a:1,b:-q}];return {type,fs,given:`${pstr(prodPoly(fs))} = 0`,moved:false};}
+      if(type===1){const k=rnd(2,7),m=rnd(1,9);if(gcd(k,m)!==1)continue;const fs=[{a:k,b:m},{a:k,b:-m}];
+        return {type,fs,given:`${term(k*k,2)} = ${m*m}`,moved:true,std:`${term(k*k,2)} ${MINUS} ${m*m} = 0`,wstd:`${term(k*k,2)} + ${m*m} = 0`,why:`Subtract ${M(String(m*m))} from both sides.`};}
+      if(type===2){
+        const a1=pick([2,3,4]),a2=pick([1,2,3,4]),b1=nz(5),b2=nz(5);
+        if(gcd(a1,b1)!==1||gcd(a2,b2)!==1)continue;
+        const fs=[{a:a1,b:b1},{a:a2,b:b2}],P=prodPoly(fs);if(!P[1]||!P[0])continue;
+        return {type,fs,given:`${pstr([0,P[1],P[2]])} = ${num(-P[0])}`,moved:true,std:`${pstr(P)} = 0`,wstd:`${pstr([-P[0],P[1],P[2]])} = 0`,why:`Move the constant by doing the opposite: ${P[0]>0?"add":"subtract"} ${M(String(Math.abs(P[0])))} on both sides.`};
+      }
+      const p=nz(7),q=nz(7);if(p===q)continue;
+      const fs=[{a:1,b:0},{a:1,b:-p},{a:1,b:-q}];
+      return {type,fs,given:`${pstr(prodPoly(fs))} = 0`,moved:false};
+    }
+  },
+  round(r){
+    const g=this.gen(r),{fs}=g,P=prodPoly(fs);
+    ctx.prompt(`<p>Solve ${M(g.given)} by factoring.</p>`);
+    ctx.play().innerHTML=`<div class="split"><ol class="steps" id="steps"></ol>${graphPanel()}</div>`;
+    const factorStep=()=>{
+      const flip=(list,idx)=>list.map((f,i)=>idx.includes(i)&&f.b?{a:f.a,b:-f.b}:f);
+      const nzIdx=fs.map((f,i)=>f.b?i:-1).filter(i=>i>=0);
+      const cands=[flip(fs,nzIdx),flip(fs,nzIdx.slice(0,1)),flip(fs,nzIdx.slice(-1)),fs.map(f=>f.b?fs[nzIdx[0]]:f)];
+      const wrong=[];const seen=new Set([prodStr(fs)]);
+      shuffle(cands).forEach(c=>{const s=prodStr(c);if(seen.has(s)||peq(prodPoly(c),P))return;seen.add(s);wrong.push(c);});
+      const li=addStep(`Step ${g.moved?2:1} · Factor`,`<p>Factor ${M(pstr(P))}${fs[0].b===0?" (take out the GCF first)":""}.</p><div class="opts"></div>`);
+      choose($(".opts",li),[{h:M(`${prodStr(fs)} = 0`),ok:true}].concat(wrong.slice(0,2).map(c=>({h:M(`${prodStr(c)} = 0`),ok:false,why:`Multiply it back out: ${M(prodStr(c)+" = "+pstr(prodPoly(c)))}.`}))),()=>{ctx.say("");zeroStep();});
+    };
+    const zeroStep=()=>{
+      const li=addStep(`Step ${g.moved?3:2} · Set each factor equal to 0`,`<p>If ${M("<i>A</i> · <i>B</i> = 0")}, then ${M("<i>A</i> = 0")} or ${M("<i>B</i> = 0")}.</p><div class="zrows"></div>`);
+      const host=$(".zrows",li);let left=fs.length;
+      fs.forEach((f,i)=>{
+        const row=document.createElement("div");row.className="zrow";
+        const z=fz(f);
+        row.innerHTML=`<span>${M(`${lin(f.a,f.b)} = 0`)} ⟹ </span><div class="opts"></div>`;
+        host.appendChild(row);
+        if(f.b===0){$(".opts",row).innerHTML=`<span class="opt hit">${M(X+" = 0")}</span>`;left--;return;}
+        const opts=uniqOpts([{h:M(X+" = "+rS(z)),ok:true},
+          {h:M(X+" = "+rS(R(-z.n,z.d))),ok:false,why:`Solve ${M(`${lin(f.a,f.b)} = 0`)}: move the constant to the other side, and its sign flips.`},
+          {h:M(X+" = "+rS(R(-f.b))),ok:false,why:`Divide by the coefficient ${M(String(f.a))} too.`},
+          {h:M(X+" = "+rS(f.b?R(f.a,-f.b):R(1))),ok:false,why:"Divide the constant by the coefficient, not the other way around."}].filter(o=>o.ok||o.h!==M(X+" = "+rS(z)))).slice(0,3);
+        choose($(".opts",row),opts,()=>{left--;if(!left)finishRound();});
+      });
+    };
+    const finishRound=()=>{
+      const roots=fs.map(fz);
+      showGraph(P,roots.map(z=>z.n/z.d));
+      $("#gnote").innerHTML=`The graph crosses the ${M(X)}-axis at each solution.`;
+      ctx.win(`${M(prodStr(fs)+" = 0")}, so ${roots.map(z=>M(X+" = "+rS(z))).join(", ")}.`);
+    };
+    if(g.moved){
+      const li=addStep("Step 1 · Get 0 on one side",`<p>The zero product property needs ${M("0")} on one side.</p><div class="opts"></div>`);
+      choose($(".opts",li),[{h:M(g.std),ok:true},{h:M(g.wstd),ok:false,why:g.why}],()=>{ctx.say("");factorStep();});
+    }else factorStep();
+  }
+};
+
+/* ---------- Station 2: square root method (Ex 5–7) ---------- */
+const S2={
+  name:"Root Out",sec:"Square root method",rounds:5,
+  gen(r){
+    const type=r;
+    for(;;){
+      if(type===0){const k=rnd(2,12);return {type,k,given:`${term(1,2)} ${MINUS} ${k*k} = 0`};}
+      if(type===1){const A=rnd(2,6),n=pick([8,12,18,20,27,28,32,45,48,50,75]);return {type,A,n,given:`${term(A,2)} = ${A*n}`};}
+      if(type===2){const A=rnd(2,5),h=nz(5),n=pick([2,3,5,6,7,10,11]);return {type,A,h,n,given:`${A}(${lin(1,-h)})${sup(2)} = ${A*n}`};}
+      if(type===3){const h=nz(5),k=rnd(1,6);if(k===Math.abs(h))continue;return {type,h,k,given:`(${lin(1,h)})${sup(2)} = ${k*k}`};}
+      const K=pick([4,9,16,25,36,49,8,12,18,20]);return {type:4,K,given:`${term(1,2)} + ${K} = 0`};
+    }
+  },
+  round(r){
+    const g=this.gen(r);
+    ctx.prompt(`<p>Solve ${M(g.given)} with the square root method. Isolate the squared part, then take the square root of both sides. Don't forget ${M("±")}.</p>`);
+    ctx.play().innerHTML=`<div class="split"><ol class="steps" id="steps"></ol>${graphPanel()}</div>`;
+    let iso,isoW,root,rootW,coefs,roots,final;
+    if(g.type===0){iso=`${X}${sup(2)} = ${g.k*g.k}`;isoW=[{h:`${X}${sup(2)} = ${MINUS}${g.k*g.k}`,why:`Add ${g.k*g.k} to both sides.`}];
+      root=`${X} = ±${g.k}`;rootW=[{h:`${X} = ${g.k}`,why:`${M(radH(X+sup(2))+" = |"+X+"|")}, so both ${M(String(g.k))} and ${M(MINUS+g.k)} work.`},{h:`${X} = ±${g.k*g.k}`,why:`Take the square root: ${M(radH(g.k*g.k)+" = "+g.k)}.`}];
+      coefs=[-g.k*g.k,0,1];roots=[-g.k,g.k];final=`${X} = ${g.k}, ${X} = ${MINUS}${g.k}`;}
+    else if(g.type===1){const [k,m]=simpRad(g.n);iso=`${X}${sup(2)} = ${g.n}`;isoW=[{h:`${X}${sup(2)} = ${g.A*g.n}`,why:`Divide both sides by ${g.A} first.`},{h:`${X}${sup(2)} = ${g.A*g.n-g.A}`,why:`${M(String(g.A))} multiplies ${M(X+sup(2))}, so divide by it.`}];
+      root=`${X} = ±${radH(g.n)} = ±${radStr(k,m)}`;rootW=[{h:`${X} = ${radStr(k,m)}`,why:`Both signs work: ${M(X+" = ±"+radStr(k,m))}.`},{h:`${X} = ±${radStr(m,k)}`,why:`${M(radH(g.n)+" = "+radH(`${k*k} · ${m}`)+" = "+radStr(k,m))}: the pair comes out.`}];
+      coefs=[-g.A*g.n,0,g.A];const v=k*Math.sqrt(m);roots=[-v,v];final=`${X} = ±${radStr(k,m)}`;}
+    else if(g.type===2){iso=`(${lin(1,-g.h)})${sup(2)} = ${g.n}`;isoW=[{h:`(${lin(1,-g.h)})${sup(2)} = ${g.A*g.n}`,why:`Divide both sides by ${g.A} first.`},{h:`${X}${sup(2)} ${g.h*g.h>0?"+":""} ${g.h*g.h} = ${g.n}`,why:`Keep the whole binomial squared. ${M(`(${lin(1,-g.h)})${sup(2)}`)} is not ${M(`${X}${sup(2)} + ${g.h*g.h}`)}.`}];
+      root=`${X} = ${num(g.h)} ± ${radH(g.n)}`;rootW=[{h:`${X} = ${num(-g.h)} ± ${radH(g.n)}`,why:`From ${M(`${lin(1,-g.h)} = ±${radH(g.n)}`)}, ${g.h>0?"add":"subtract"} ${Math.abs(g.h)} on both sides.`},{h:`${X} = ${num(g.h)} + ${radH(g.n)}`,why:`Take both signs: ${M("±"+radH(g.n))}.`}];
+      coefs=[g.A*(g.h*g.h-g.n),-2*g.A*g.h,g.A];roots=[g.h-Math.sqrt(g.n),g.h+Math.sqrt(g.n)];final=`${X} = ${num(g.h)} + ${radH(g.n)}, ${X} = ${num(g.h)} ${MINUS} ${radH(g.n)}`;}
+    else if(g.type===3){iso=null;
+      root=`${lin(1,g.h)} = ±${g.k} ⟹ ${X} = ${num(-g.h+g.k)}, ${X} = ${num(-g.h-g.k)}`;
+      rootW=[{h:`${X} = ${num(g.h+g.k)}, ${X} = ${num(g.h-g.k)}`,why:`From ${M(`${lin(1,g.h)} = ±${g.k}`)}, ${g.h>0?"subtract":"add"} ${Math.abs(g.h)} on both sides.`},{h:`${X} = ${num(-g.h+g.k)}`,why:`Take both signs: ${M(`${lin(1,g.h)} = ${g.k}`)} or ${M(`${lin(1,g.h)} = ${MINUS}${g.k}`)}.`}];
+      coefs=[g.h*g.h-g.k*g.k,2*g.h,1];roots=[-g.h+g.k,-g.h-g.k];final=`${X} = ${num(-g.h+g.k)}, ${X} = ${num(-g.h-g.k)}`;}
+    else{const [k,m]=simpRad(g.K);iso=`${X}${sup(2)} = ${MINUS}${g.K}`;isoW=[{h:`${X}${sup(2)} = ${g.K}`,why:`Subtract ${g.K} from both sides.`}];
+      const rs=radStr(k,m)+(m>1?" ":"")+I;
+      root=`${X} = ±${radH(MINUS+g.K)} = ±${rs}`;rootW=[{h:`${X} = ±${radStr(k,m)}`,why:`${M(radH(MINUS+g.K)+" = "+radH(g.K)+" · "+radH(MINUS+"1"))}, and ${M(radH(MINUS+"1")+" = "+I)}.`},{h:"No solution",why:`No <b>real</b> solution, but there are two complex ones: ${M(radH(MINUS+"1")+" = "+I)}.`}];
+      coefs=[g.K,0,1];roots=[];final=`${X} = ±${rs}`;}
+    const rootStep=()=>{
+      const li=addStep(iso?"Step 2 · Square root of both sides":"Step 1 · Square root of both sides",`<p>${iso?M(iso):M(g.given)}</p><div class="opts"></div>`);
+      choose($(".opts",li),[{h:M(root),ok:true}].concat(rootW.map(w=>({h:M(w.h),ok:false,why:w.why}))),()=>{
+        showGraph(coefs,roots);
+        $("#gnote").innerHTML=roots.length?`The graph crosses the ${M(X)}-axis at the two solutions.`:`The graph never touches the ${M(X)}-axis, so there are no real solutions, only complex ones.`;
+        ctx.win(M(final));
+      });
+    };
+    if(iso){
+      const li=addStep("Step 1 · Isolate the square",`<p>${M(g.given)}</p><div class="opts"></div>`);
+      choose($(".opts",li),[{h:M(iso),ok:true}].concat(isoW.map(w=>({h:M(w.h),ok:false,why:w.why}))),()=>{ctx.say("");rootStep();});
+    }else rootStep();
+  }
+};
+
+/* ---------- Station 3: quadratic formula (Ex 8–9) ---------- */
+const S3={
+  name:"Formula Machine",sec:"Quadratic formula",rounds:5,
+  gen(r){
+    const type=r<4?r:rnd(0,2);
+    for(;;){
+      let a,b,c;
+      if(type===0){const p1=rnd(1,3),q1=nz(4),p2=rnd(1,3),q2=nz(4);a=p1*p2;b=p1*q2+p2*q1;c=q1*q2;if(!b)continue;}
+      else{a=rnd(1,3);b=nz(7);c=nz(7);}
+      const D=b*b-4*a*c;
+      if(type===1||type===3){const s=Math.round(Math.sqrt(Math.abs(D)));if(D<=0||s*s===D)continue;}
+      if(type===2&&D>=0)continue;
+      return {type,a,b,c,D,moved:type===3};
+    }
+  },
+  round(r){
+    const {a,b,c,D,moved}=this.gen(r);
+    const std=`${pstr([c,b,a])} = 0`;
+    const given=moved?`${term(a,2)} = ${pstr([-c,-b])}`:std;
+    ctx.prompt(`<p>Solve ${M(given)} with the quadratic formula ${M(`${X} = ${fracH(`${MINUS}<i>b</i> ± ${radH("<i>b</i>"+sup(2)+" "+MINUS+" 4<i>ac</i>")}`,"2<i>a</i>")}`)}.</p>`);
+    ctx.play().innerHTML=`<div class="split"><ol class="steps" id="steps"></ol>${graphPanel()}</div>`;
+    const abc=(A,B,C)=>`<i>a</i> = ${num(A)}, <i>b</i> = ${num(B)}, <i>c</i> = ${num(C)}`;
+    const s1=addStep("Step 1 · Read a, b, c",`<p>${moved?`First get ${M("0")} on one side: ${M(std)}. `:""}Which values go into the formula?</p><div class="opts"></div>`);
+    choose($(".opts",s1),uniqOpts([{h:M(abc(a,b,c)),ok:true},
+      {h:M(abc(a,-b,c)),ok:false,why:`Read the sign with each number: in ${M(std)}, ${M("<i>b</i> = "+num(b))}.`},
+      {h:M(abc(a,b,-c)),ok:false,why:moved?`When ${M(String(Math.abs(c)))} moves to the left side its sign flips, so ${M("<i>c</i> = "+num(c))}.`:`Read the sign with each number: ${M("<i>c</i> = "+num(c))}.`}]),()=>{
+      ctx.say("");
+      const s2=addStep("Step 2 · The discriminant",`<p>${M(`<i>b</i>${sup(2)} ${MINUS} 4<i>ac</i> = (${num(b)})${sup(2)} ${MINUS} 4(${num(a)})(${num(c)})`)} = ?</p><div class="opts"></div><div class="meter" id="meter"></div>`);
+      choose($(".opts",s2),uniqOpts([{h:M(num(D)),ok:true},
+        {h:M(num(b*b+4*a*c)),ok:false,why:`Watch the signs: ${M(`${MINUS}4(${num(a)})(${num(c)}) = ${num(-4*a*c)}`)}.`},
+        {h:M(num(-b*b-4*a*c)),ok:false,why:`${M(`(${num(b)})${sup(2)} = ${b*b}`)}. A square is never negative.`}]),()=>{
+        $("#meter").innerHTML=D>0?`${M("<i>b</i>"+sup(2)+" "+MINUS+" 4<i>ac</i> > 0")}: two real solutions.`:D===0?`${M("= 0")}: one real solution.`:`${M("<i>b</i>"+sup(2)+" "+MINUS+" 4<i>ac</i> < 0")}: the square root of a negative gives ${M(I)}. Two complex solutions.`;
+        ctx.say("");
+        const s3=addStep("Step 3 · Finish the formula",`<p>${M(`${X} = ${fracH(`${MINUS}(${num(b)}) ± ${radH(num(D))}`,`2(${num(a)})`)}`)}</p><div class="opts"></div>`);
+        const ok=qf(b,D,2*a);
+        const items=[{h:M(ok),ok:true}];
+        if(a!==1)items.push({h:M(qf(b,D,2)),ok:false,why:`The denominator is ${M("2<i>a</i> = "+2*a)}, and it divides the whole numerator.`});
+        items.push({h:M(qf(-b,D,2*a)),ok:false,why:`The formula starts with ${M(MINUS+"<i>b</i>")}: ${M(`${MINUS}(${num(b)}) = ${num(-b)}`)}.`});
+        if(items.length<3&&D<0)items.push({h:M(qf(b,-D,2*a)),ok:false,why:`${M(radH(num(D)))} is imaginary: ${M(radH(MINUS+"<i>n</i>")+" = "+radH("<i>n</i>")+" "+I)}.`});
+        choose($(".opts",s3),uniqOpts(items),()=>{
+          const rr=D>=0?[(-b-Math.sqrt(D))/(2*a),(-b+Math.sqrt(D))/(2*a)]:[];
+          showGraph([c,b,a],rr);
+          $("#gnote").innerHTML=D<0?`The parabola never reaches the ${M(X)}-axis, so the solutions are complex.`:`The parabola crosses the ${M(X)}-axis at the two solutions.`;
+          ctx.win(M(ok));
+        });
+      });
+    });
+  }
+};
+
+/* ---------- Station 4: completing the square with tiles (Ex 10) ---------- */
+const S4={
+  name:"Square It Up",sec:"Completing the square",rounds:5,
+  gen(r){
+    for(;;){
+      let h=rnd(1,4);if(r===2||r===3)h=-h;if(r===4)h*=pick([1,-1]);
+      let k;
+      if(r===1||r===3){k=pick([1,4,9,16]);}
+      else if(r===4){k=-pick([1,2,3,4,5,7]);}
+      else{k=pick([2,3,5,6,7,8,10,11,12,13]);}
+      const c=h*h-k;if(!c)continue;
+      return {h,k,c,b:2*h};
+    }
+  },
+  round(r){
+    const {h,k,c,b}=this.gen(r),H=Math.abs(h),hh=h*h;
+    const eq=`${pstr([c,b,1])} = 0`;
+    ctx.prompt(`<p>Solve ${M(eq)} by completing the square. You'll build ${M(X+sup(2)+term(b,1,false))} out of tiles, then fill in the missing corner.</p>`);
+    ctx.play().innerHTML=`<div class="split"><ol class="steps" id="steps"></ol>${graphPanel()}</div>`;
+    const s1=addStep("Step 1 · Move the constant",`<p>Keep the ${M(X)}-terms on the left.</p><div class="opts"></div>`);
+    choose($(".opts",s1),[{h:M(`${X}${sup(2)}${term(b,1,false)} = ${num(-c)}`),ok:true},{h:M(`${X}${sup(2)}${term(b,1,false)} = ${num(c)}`),ok:false,why:`${c>0?"Subtract":"Add"} ${M(String(Math.abs(c)))} on both sides. The sign flips when it moves.`}],()=>{
+      ctx.say("");
+      const s2=addStep("Step 2 · Complete the square",`<p>Split ${M(term(b,1,true))} into two strips of ${M(term(h,1,true))}. How many unit tiles fill the corner? Add the same number to <b>both</b> sides.</p>
+        <div class="tilebox" id="tilebox"></div>
+        <div class="ctrl"><span>Unit tiles to add</span><div class="stepper"><button type="button" data-d="-1" aria-label="Fewer tiles">−</button><output id="v-n">0</output><button type="button" data-d="1" aria-label="More tiles">+</button></div></div>
+        <div class="actions"><button type="button" class="btn primary" id="addt">Add to both sides</button></div>`);
+      let n=0,locked=false;
+      const drawTiles=()=>{
+        const S=120,u=18,w=H*u,pad=24,W=pad+S+w+8,Hh=pad+S+w+8;
+        let svg=`<svg class="tiles" viewBox="0 0 ${W} ${Hh}" role="img" aria-label="Completing the square tile picture">`;
+        svg+=`<text class="tl" x="${pad+S/2}" y="${pad-8}" text-anchor="middle">x</text><text class="tl" x="${pad+S+w/2}" y="${pad-8}" text-anchor="middle">${H}</text>`;
+        svg+=`<text class="tl" x="${pad-8}" y="${pad+S/2}" text-anchor="end">x</text><text class="tl" x="${pad-8}" y="${pad+S+w/2+5}" text-anchor="end">${H}</text>`;
+        svg+=`<rect class="tsq" x="${pad}" y="${pad}" width="${S}" height="${S}"/><text class="tin" x="${pad+S/2}" y="${pad+S/2+6}" text-anchor="middle">x²</text>`;
+        svg+=`<rect class="tlin" x="${pad+S}" y="${pad}" width="${w}" height="${S}"/><text class="tin small" x="${pad+S+w/2}" y="${pad+S/2+5}" text-anchor="middle" transform="rotate(-90 ${pad+S+w/2} ${pad+S/2})">${h<0?"−":""}${H}x</text>`;
+        svg+=`<rect class="tlin" x="${pad}" y="${pad+S}" width="${S}" height="${w}"/><text class="tin small" x="${pad+S/2}" y="${pad+S+w/2+5}" text-anchor="middle">${h<0?"−":""}${H}x</text>`;
+        let idx=0;
+        for(let i=0;i<H;i++)for(let j=0;j<H;j++){svg+=`<rect class="${idx<n?"tunit":"thole"}" x="${pad+S+j*u+1}" y="${pad+S+i*u+1}" width="${u-2}" height="${u-2}" rx="2"/>`;idx++;}
+        svg+=`</svg>`;
+        const extra=n>hh?`<p class="over">${n-hh} extra tile${n-hh>1?"s":""} don't fit in the corner.</p>`:"";
+        $("#tilebox").innerHTML=svg+extra;$("#v-n").textContent=n;
+      };
+      drawTiles();
+      s2.querySelector(".stepper").addEventListener("click",e=>{const bt=e.target.closest("button");if(!bt||locked)return;n=Math.max(0,Math.min(40,n+ +bt.dataset.d));drawTiles();});
+      $("#addt").onclick=()=>{
+        if(locked)return;
+        if(n!==hh)return ctx.miss(n<hh?`The corner still has holes. It is ${M(`${H} × ${H}`)}, which is ${M(`(${fracH("<i>b</i>","2")})${sup(2)}`)}.`:`Too many. The corner is only ${M(`${H} × ${H}`)}: ${M(`(${fracH("1","2")} · ${num(b)})${sup(2)} = ${hh}`)}.`);
+        locked=true;s2.querySelectorAll("button").forEach(x=>{x.disabled=true;});
+        s2.insertAdjacentHTML("beforeend",`<p>${M(`${X}${sup(2)}${term(b,1,false)} + ${hh} = ${num(-c)} + ${hh}`)}</p>`);
+        ctx.say(`${M(`(${fracH("1","2")} · ${num(b)})${sup(2)} = ${hh}`)}. The tiles now form a full square with side ${M(lin(1,h))}.`);
+        const s3=addStep("Step 3 · Write it as a square",`<div class="opts"></div>`);
+        choose($(".opts",s3),uniqOpts([{h:M(`(${lin(1,h)})${sup(2)} = ${num(k)}`),ok:true},
+          {h:M(`(${lin(1,b)})${sup(2)} = ${num(k)}`),ok:false,why:`The side of the square is ${M(lin(1,h))}: half of ${M(String(b))}, not all of it.`},
+          {h:M(`(${lin(1,h)})${sup(2)} = ${num(-c)}`),ok:false,why:`You added ${hh} to the left, so add ${hh} to the right side too.`}]),()=>{
+          ctx.say("");
+          const [kk,m]=simpRad(Math.abs(k));
+          const rt=k<0?radStr(kk,m)+(m>1?" ":"")+I:radStr(kk,m);
+          const ans=m===1&&k>0?`${X} = ${num(-h+kk)}, ${X} = ${num(-h-kk)}`:`${X} = ${num(-h)} ± ${rt}`;
+          const w1=m===1&&k>0?`${X} = ${num(h+kk)}, ${X} = ${num(h-kk)}`:`${X} = ${num(h)} ± ${rt}`;
+          const w2=k<0?`${X} = ${num(-h)} ± ${radStr(kk,m)}`:m===1?`${X} = ${num(-h+k)}, ${X} = ${num(-h-k)}`:`${X} = ${num(-h)} ± ${k}`;
+          const s4=addStep("Step 4 · Square root method",`<p>${M(`${lin(1,h)} = ±${k<0?radH(num(k)):radH(k)}`)}</p><div class="opts"></div>`);
+          choose($(".opts",s4),uniqOpts([{h:M(ans),ok:true},
+            {h:M(w1),ok:false,why:`${h>0?"Subtract":"Add"} ${M(String(H))} on both sides to get ${M(X)} alone.`},
+            {h:M(w2),ok:false,why:k<0?`${M(radH(num(k)))} is imaginary: ${M(radH(num(k))+" = "+radH(-k)+" "+I)}.`:"Take the square root of the right side, with ±."}]),()=>{
+            const rr=k>=0?[-h-Math.sqrt(k),-h+Math.sqrt(k)]:[];
+            showGraph([c,b,1],rr);
+            $("#gnote").innerHTML=k<0?`The parabola stays above the ${M(X)}-axis, so the solutions are complex.`:`The parabola crosses the ${M(X)}-axis at the solutions.`;
+            ctx.win(M(ans));
+          });
+        });
+      };
+    });
+  }
+};
+
+/* ---------- Station 5: discriminant speed round ---------- */
+function genDisc(){
+  const kind=pick(["two","one","cx"]);
+  for(;;){
+    let a,b,c;
+    if(kind==="one"){const p=rnd(1,4),q=nz(6);a=p*p;b=2*p*q;c=q*q;}
+    else{a=rnd(1,5);b=rnd(-9,9);c=nz(9);}
+    const D=b*b-4*a*c;
+    if(kind==="two"&&D<=0)continue;
+    if(kind==="cx"&&D>=0)continue;
+    return {a,b,c,D,kind};
+  }
+}
+const S5={
+  name:"Discriminant Dash",sec:"Speed round",rounds:1,
+  round(){
+    const LBL={two:"Two real solutions",one:"One real solution",cx:"Two complex solutions"},KEYS=["two","one","cx"];
+    ctx.prompt(`<p>60 seconds. The discriminant ${M("<i>b</i>"+sup(2)+" "+MINUS+" 4<i>ac</i>")} from the quadratic formula tells you what kind of solutions to expect: positive means two real, zero means one real, negative means two complex. Keys 1, 2, 3 work too. Scores of 4, 8 and 12 earn one, two and three stars.</p>`);
+    ctx.play().innerHTML=`<div class="speed"><div class="timer"><div class="bar" id="bar"></div></div>
+      <div class="speed-top"><span id="clock">60.0 s</span><span id="score">Score 0</span></div>
+      <p class="claim m" id="claim">${pstr([2,1,1])} = 0</p>
+      <div class="choices" id="choices">${KEYS.map((k,i)=>`<button type="button" class="choice" data-k="${k}" disabled><kbd>${i+1}</kbd> ${LBL[k]}</button>`).join("")}</div></div>`;
+    $("#actions").innerHTML=`<button type="button" class="btn primary" id="start">Start the clock</button>`;
+    ctx.say(`Sample: ${M(pstr([2,1,1])+" = 0")} has ${M(`1${sup(2)} ${MINUS} 4(1)(2) = ${MINUS}7`)}, which is negative, so it has two complex solutions.`);
+    let score=0,seen=0,cur=null,locked=true,t0=0,tick=null,wait=null,running=false;
+    const btns=[...ctx.play().querySelectorAll(".choice")];
+    function next(){cur=genDisc();$("#claim").innerHTML=`${pstr([cur.c,cur.b,cur.a])} = 0`;locked=false;btns.forEach(b=>{b.disabled=false;});}
+    function end(){
+      running=false;clearInterval(tick);clearTimeout(wait);
+      const st=score>=12?3:score>=8?2:score>=4?1:0;
+      finish(st,`You classified ${score} of ${seen} equations correctly in 60 seconds.${st<3?" Reach 12 for three stars.":""}`);
+    }
+    function answer(k){
+      if(locked||!running)return;
+      locked=true;btns.forEach(b=>{b.disabled=true;});seen++;
+      const ok=k===cur.kind,why=`${M(`(${num(cur.b)})${sup(2)} ${MINUS} 4(${cur.a})(${num(cur.c)}) = ${num(cur.D)}`)}, so ${LBL[cur.kind].toLowerCase()}.`;
+      if(ok){score++;$("#score").textContent=`Score ${score}`;ctx.say(`✓ ${why}`,"good");}
+      else ctx.say(`✗ ${why}`,"bad");
+      wait=setTimeout(next,ok?1000:2400);
+    }
+    $("#start").onclick=()=>{
+      $("#actions").innerHTML="";ctx.say("");running=true;t0=performance.now();
+      tick=setInterval(()=>{
+        const left=Math.max(0,60-(performance.now()-t0)/1000);
+        $("#clock").textContent=left.toFixed(1)+" s";$("#bar").style.transform=`scaleX(${left/60})`;
+        if(left<=0)end();
+      },100);
+      next();
+    };
+    $("#choices").addEventListener("click",e=>{const b=e.target.closest(".choice");if(b)answer(b.dataset.k);});
+    S.key=e=>{const k=KEYS[+e.key-1];if(k)answer(k);};
+    S.cleanup=()=>{running=false;clearInterval(tick);clearTimeout(wait);};
+  }
+};
+
+const STATIONS=[S1,S2,S3,S4,S5];
+
+$("#rail").addEventListener("click",e=>{const b=e.target.closest(".st-btn");if(b)loadStation(+b.dataset.i);});
+document.addEventListener("keydown",e=>{if(e.metaKey||e.ctrlKey||e.altKey)return;if(S.key)S.key(e);});
+let armed=false;
+$("#reset").onclick=e=>{
+  if(!armed){armed=true;e.target.textContent="Tap again to erase all stars";setTimeout(()=>{armed=false;e.target.textContent="Reset stars";},4000);return;}
+  best={};store.set(best);armed=false;e.target.textContent="Stars reset";renderNav();
+};
+renderNav();startRound();
+})();
+</script>
+</body>
+</html>
